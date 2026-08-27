@@ -520,7 +520,7 @@ export class DurableObjectNamespace {
   }
 }
 
-/** Encodes one value using the TypeScript SDK's structured-clone JSON tags. */
+/** Encodes one value using the JavaScript Worker SDK's structured-clone JSON tags. */
 export function encodeStructuredClone(value) {
   const json = JSON.stringify(value, (_key, current) => encodeCloneValue(current));
   if (json === undefined) throw new TypeError('Durable Object storage value is not structured-cloneable');

@@ -1,9 +1,9 @@
-import { existsSync } from "node:fs";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { removeDir, UserError } from "@cloudflare/workers-utils";
+import { workerAssetPath } from "@verglas/worker-js/assets";
 import { build as bundle } from "esbuild";
 import { getBasePath } from "../paths";
 import type { Config, DurableObjectBindings } from "@cloudflare/workers-utils";
@@ -68,18 +68,6 @@ export function assertVerglasUploadSupported(config: Config): void {
 	}
 }
 
-function assetPath(name: string): string {
-	const candidates = [
-		path.join(getBasePath(), "verglas-worker", name),
-		path.join(getBasePath(), "templates", "verglas-worker", name),
-	];
-	const found = candidates.find((candidate) => existsSync(candidate));
-	if (found === undefined) {
-		throw new Error(`Verglas Worker asset is missing: ${name}`);
-	}
-	return found;
-}
-
 /**
  * Componentize the already bundled Wrangler module. The source bundle is
  * written to a temporary directory, while the original source remains in the
@@ -95,7 +83,7 @@ export async function componentizeWorker(options: {
 	try {
 		await writeFile(path.join(workDir, "worker.js"), options.content, "utf8");
 		const manifest = JSON.stringify(options.manifest);
-		const shim = assetPath("shim.js").replaceAll("\\", "\\\\");
+		const shim = workerAssetPath("shim.js").replaceAll("\\", "\\\\");
 		const source = [
 			'import * as project from "./worker.js";',
 			`import { createHandler, createWorker } from ${JSON.stringify(shim)};`,
@@ -115,7 +103,9 @@ export async function componentizeWorker(options: {
 			write: false,
 			legalComments: "none",
 			minify: true,
-			alias: { "cloudflare:workers": assetPath("cloudflare-workers.js") },
+			alias: {
+				"cloudflare:workers": workerAssetPath("cloudflare-workers.js"),
+			},
 			external: ["verglas:do-worker/*@0.1.0"],
 		});
 		if (bundled.outputFiles.length !== 1) {
@@ -142,7 +132,7 @@ export async function componentizeWorker(options: {
 		)) as { componentize: Componentize };
 		const result = await componentizeModule.componentize({
 			sourcePath: bundledPath,
-			witPath: assetPath("world.wit"),
+			witPath: workerAssetPath("world.wit"),
 			worldName: "service",
 			disableFeatures: ["stdio", "random", "clocks", "http", "fetch-event"],
 		});

@@ -1,0 +1,27 @@
+---
+title: "Verglas products and infrastructure"
+description: "The nine Worker/DO products and the shared runtime capabilities beneath them."
+icon: "snowflake"
+---
+
+Verglas has exactly nine products: Worker, Durable Object, Stream, Pipeline,
+Sink, Catalog, Vectorize, Graph, and Query. Worker is stateless. Durable Object is a Turso-backed
+stateful Worker class. Stream, Pipeline, Sink, Catalog, Vectorize, Graph, and Query are prebuilt
+Worker/DO deployments. Read the [normative platform
+page](/docs/architecture/primitives-platform) for the complete definitions and
+PP1–PP10 criteria.
+
+The same repository contains the Wasmtime runtime, Foyer cache, origin access,
+Iceberg commit capability, and Catalog libraries shared by those products.
+These are implementation layers, not extra products.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Nine-product platform" icon="diagram-project" href="/docs/architecture/primitives-platform">
+    Follow Worker, Durable Object, Stream, Pipeline, Sink, Catalog, Vectorize, Graph, and Query ownership.
+  </Card>
+  <Card title="Understand the architecture" icon="compass-drafting" href="/docs/architecture/overview">
+    Follow product bindings and the shared runtime capabilities.
+  </Card>
+</CardGroup>

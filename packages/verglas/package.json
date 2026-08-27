@@ -61,8 +61,7 @@
 	},
 	"scripts": {
 		"assert-git-version": "node -r esbuild-register scripts/assert-git-version.ts",
-		"build": "pnpm run clean && pnpm tsup && pnpm tsdown && pnpm run copy-verglas-worker-assets && pnpm run generate-json-schema",
-		"copy-verglas-worker-assets": "node -r esbuild-register scripts/copy-verglas-worker-assets.ts",
+		"build": "pnpm run clean && pnpm tsup && pnpm tsdown && pnpm run generate-json-schema",
 		"check:type": "tsc -p ./tsconfig.json && tsc -p ./templates/tsconfig.json",
 		"clean": "node -r esbuild-register ../../tools/clean/clean.ts verglas-dist miniflare-dist emitted-types",
 		"dev": "pnpm run clean && concurrently -c black,blue --kill-others-on-fail false \"pnpm tsup --watch src --watch ../containers-shared/src --watch ../cli\" \"pnpm run check:type --watch --preserveWatchOutput\"",
@@ -79,6 +78,7 @@
 		"@bytecodealliance/componentize-js": "0.22.0",
 		"@cloudflare/kv-asset-handler": "workspace:*",
 		"@cloudflare/unenv-preset": "workspace:*",
+		"@verglas/worker-js": "workspace:*",
 		"blake3-wasm": "2.1.5",
 		"esbuild": "catalog:default",
 		"miniflare": "5.20260826.0-alpha",

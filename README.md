@@ -1,7 +1,9 @@
 # Verglas SDK
 
-This repository contains the Verglas Worker CLI, derived from the open-source
-Wrangler implementation and maintained independently by Verglas.
+This repository contains the public Verglas developer surface: the Worker CLI,
+the JavaScript and Python Worker SDKs, and the product documentation. The CLI
+is derived from the open-source Wrangler implementation and maintained
+independently by Verglas.
 
 ## CLI
 
@@ -22,3 +24,16 @@ their public APIs.
 
 See [NOTICE](NOTICE), [LICENSE-MIT](LICENSE-MIT), and
 [LICENSE-APACHE](LICENSE-APACHE) for attribution and licensing.
+
+## Worker SDKs
+
+- [`@verglas/worker-js`](packages/worker-js) builds JavaScript and TypeScript
+  Workers and Durable Objects into Verglas WebAssembly components.
+- [`verglas-worker`](packages/worker-py) provides the Python Worker runtime and
+  component builder.
+
+## Documentation
+
+The Mintlify documentation source lives in [`docs/`](docs), with navigation in
+[`docs.json`](docs.json). Runtime implementation remains in
+[`verglas-org/verglas`](https://github.com/verglas-org/verglas).
