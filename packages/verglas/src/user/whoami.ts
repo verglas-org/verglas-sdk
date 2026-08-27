@@ -3,12 +3,15 @@ import {
 	getCloudflareComplianceRegion,
 } from "@cloudflare/workers-utils";
 import chalk from "chalk";
-import { fetchResult } from "../cfetch";
 import { isAuthenticationError } from "../core/handle-errors";
 import { logger } from "../logger";
 import { formatMessage } from "../utils/format-message";
 import { fetchMembershipRoles } from "./membership";
-import { fetchAllAccounts, getCredentialStore } from "./user";
+import {
+	fetchAllAccounts,
+	getCredentialStore,
+	getVerglasUserEmail,
+} from "./user";
 import { DefaultScopeKeys, getAPIToken, getAuthFromEnv, getScopes } from ".";
 import type { Scope } from ".";
 import type {
@@ -17,7 +20,7 @@ import type {
 } from "@cloudflare/workers-utils";
 
 /**
- * Represents the JSON output of `wrangler whoami --json`.
+ * Represents the JSON output of `verglas whoami --json`.
  */
 export type WhoamiResult =
 	| { loggedIn: false }
@@ -66,7 +69,7 @@ export async function whoami(
 	logger.log("Getting User settings...");
 	const user = await getUserInfo(complianceConfig);
 	if (!user) {
-		logger.log("You are not authenticated. Please run `wrangler login`.");
+		logger.log("You are not authenticated. Please run `verglas login`.");
 		logger.log(
 			"To deploy without logging in, run a command like `wrangler deploy --temporary` to use a temporary preview account."
 		);
@@ -77,10 +80,11 @@ export async function whoami(
 		user.authType === "User API Token" ||
 		user.authType === "Account API Token"
 	) {
-		logger.log(
-			"ℹ️  The API Token is read from the CLOUDFLARE_API_TOKEN environment variable."
-		);
-	} else if (user.authType === "OAuth Token") {
+		logger.log("ℹ️  The API Token is read from VERGLAS_API_TOKEN.");
+	} else if (
+		user.authType === "OAuth Token" ||
+		user.authType === "WorkOS Access Token"
+	) {
 		logger.log(
 			`🔐 Credentials are stored in: ${chalk.blue(getCredentialStore().describe())}`
 		);
@@ -176,6 +180,15 @@ function printAccountIdMismatchWarning(
 }
 
 function printTokenPermissions(user: UserInfo) {
+	if (
+		user.authType === "WorkOS Access Token" ||
+		user.authType === "Verglas API Token"
+	) {
+		logger.log(
+			"🔓 WorkOS permissions are managed by your Verglas organization."
+		);
+		return;
+	}
 	const permissions =
 		user.tokenPermissions?.map((scope) => scope.split(":")) ?? [];
 	if (user.authType !== "OAuth Token") {
@@ -257,7 +270,9 @@ type AuthType =
 	| "Global API Key"
 	| "User API Token"
 	| "Account API Token"
-	| "OAuth Token";
+	| "OAuth Token"
+	| "WorkOS Access Token"
+	| "Verglas API Token";
 export interface UserInfo {
 	apiToken: string;
 	authType: AuthType;
@@ -293,7 +308,7 @@ export async function getUserInfo(
  * What method is the current Wrangler session authenticated through?
  */
 async function getAuthType(
-	complianceConfig: ComplianceConfig,
+	_complianceConfig: ComplianceConfig,
 	credentials: ApiCredentials
 ): Promise<AuthType> {
 	if ("authKey" in credentials) {
@@ -302,56 +317,17 @@ async function getAuthType(
 
 	const usingEnvAuth = !!getAuthFromEnv();
 	if (!usingEnvAuth) {
-		return "OAuth Token";
+		return "WorkOS Access Token";
 	}
-
-	const tokenType = await getTokenType(complianceConfig);
-	if (tokenType === "account") {
-		return "Account API Token";
-	} else {
-		return "User API Token";
-	}
-}
-
-/**
- * Is the current API token account scoped or user scoped?
- */
-async function getTokenType(
-	complianceConfig: ComplianceConfig
-): Promise<"user" | "account"> {
-	try {
-		// Try verifying the current token as a user scoped API token
-		await fetchResult<{ id: string }>(complianceConfig, "/user/tokens/verify");
-
-		// If the call succeeds, the token is user scoped
-		return "user";
-	} catch (e) {
-		// This is an "Invalid API Token" error, which indicates that the current token is _not_ user scoped
-		if ((e as { code?: number }).code === 1000) {
-			return "account";
-		}
-		// Some other API error? This isn't expected in normal usage
-		throw e;
-	}
+	return "Verglas API Token";
 }
 
 async function getEmail(
-	complianceConfig: ComplianceConfig
+	_complianceConfig: ComplianceConfig
 ): Promise<string | undefined> {
-	try {
-		const { email } = await fetchResult<{ email: string }>(
-			complianceConfig,
-			"/user"
-		);
-		return email;
-	} catch (e) {
-		const unauthorizedAccess = 9109;
-		if ((e as { code?: number }).code === unauthorizedAccess) {
-			return undefined;
-		} else {
-			throw e;
-		}
-	}
+	// Verglas WorkOS identity discovery returns the email alongside organizations.
+	// Do not call Wrangler's `/user` endpoint for a WorkOS bearer.
+	return getVerglasUserEmail();
 }
 
 type AccountInfo = { name: string; id: string };

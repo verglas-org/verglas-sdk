@@ -13,7 +13,7 @@ function assertNoEnvCredentials() {
 	}
 
 	throw new UserError(
-		"Cannot manage auth profiles while CLOUDFLARE_API_TOKEN is set. Unset CLOUDFLARE_API_TOKEN and try again.",
+		"Cannot manage auth profiles while an API token is set. Unset VERGLAS_API_TOKEN (or its Cloudflare compatibility alias) and try again.",
 		{
 			telemetryMessage:
 				"profile mutation command used when api token provided via env var",

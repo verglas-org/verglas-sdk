@@ -22,16 +22,10 @@ import type { URLSearchParams } from "node:url";
 import type { HeadersInit, RequestInfo, RequestInit } from "undici";
 
 /**
- * Select Verglas only for this CLI. The shared fetch implementation still
- * serves Cloudflare consumers, so the default is installed lazily and never
- * overwrites an explicit Verglas or Cloudflare endpoint override.
+ * Install the Verglas API default lazily so an explicit Verglas endpoint wins.
  */
 export function ensureVerglasApiBaseUrl(): void {
-	if (
-		process.env.VERGLAS_API_BASE_URL === undefined &&
-		process.env.CLOUDFLARE_API_BASE_URL === undefined &&
-		process.env.CF_API_BASE_URL === undefined
-	) {
+	if (process.env.VERGLAS_API_BASE_URL === undefined) {
 		process.env.VERGLAS_API_BASE_URL = "https://api.verglas.dev/client/v4";
 	}
 }

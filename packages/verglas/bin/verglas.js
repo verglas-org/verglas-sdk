@@ -4,18 +4,15 @@ const path = require("path");
 
 // Set the Verglas default before loading the bundled CLI so shared helpers
 // that resolve their API URL during module initialization use the right host.
-// Both endpoint variables remain explicit overrides for compatibility.
-if (
-	process.env.VERGLAS_API_BASE_URL === undefined &&
-	process.env.CLOUDFLARE_API_BASE_URL === undefined &&
-	process.env.CF_API_BASE_URL === undefined
-) {
+if (process.env.VERGLAS_API_BASE_URL === undefined) {
 	process.env.VERGLAS_API_BASE_URL = "https://api.verglas.dev/client/v4";
 }
 
+// Verglas does not send the inherited Wrangler telemetry stream.
+process.env.WRANGLER_SEND_METRICS = "false";
+
 // The inherited auth/account resolver still consumes the Cloudflare-compatible
-// variable names internally. Expose native Verglas names without removing the
-// old names users may rely on when targeting another compatible endpoint.
+// variable names internally. Expose native Verglas names to that implementation.
 if (
 	process.env.VERGLAS_API_TOKEN !== undefined &&
 	process.env.CLOUDFLARE_API_TOKEN === undefined

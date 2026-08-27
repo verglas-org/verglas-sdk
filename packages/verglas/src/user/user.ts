@@ -1,34 +1,40 @@
-// The wrangler auth layer proper — the OAuth flow wiring, credential storage,
-// login / logout / refresh, credential resolution, account selection, and the
-// `requireAuth` / `requireApiToken` entry points — now lives in
-// `@cloudflare/workers-auth/wrangler` so other Cloudflare CLIs can share it.
-//
-// This file is a thin wrangler-side adapter:
-//   - It builds the shared auth layer via `createWranglerAuth(...)`, injecting
-//     the few wrangler primitives that can't move into the shared package: the
-//     logger, the interactive `prompt` / `select`, and the User-Agent string.
-//   - It re-exports the resulting helpers as thin wrappers so the historical
-//     `from "../user"` import path — and the `vi.mock` / `vi.spyOn` seams in the
-//     test suite — keep working unchanged.
-//   - It owns the Cloudflare-specific OAuth scope catalog (the `Scope` union and
-//     the mutable `DefaultScopeKeys`), which is wrangler product config rather
-//     than shared auth machinery.
-
-import { getAuthFromEnv as getAuthFromEnvShared } from "@cloudflare/workers-auth";
 import {
-	createWranglerAuth,
+	closeSync,
+	existsSync,
+	fsyncSync,
+	mkdirSync,
+	openSync,
+	readFileSync,
+	renameSync,
+	unlinkSync,
+	writeSync,
+	chmodSync,
+} from "node:fs";
+import {
+	createServer,
+	type IncomingMessage,
+	type ServerResponse,
+} from "node:http";
+import os from "node:os";
+import path from "node:path";
+import { getAuthFromEnv as getCloudflareAuthFromEnv } from "@cloudflare/workers-auth";
+import {
 	DefaultScopes,
 	DefaultScopeKeys,
 	setLoginScopeKeys,
 	validateScopeKeys,
 	type Scope,
 } from "@cloudflare/workers-auth/wrangler";
-import { version as verglasVersion } from "../../package.json";
-import { NoDefaultValueProvided, prompt, select } from "../dialogs";
+import {
+	getVerglasApiBaseUrl,
+	openInBrowser,
+	UserError,
+} from "@cloudflare/workers-utils";
+import { fetch } from "undici";
+import { NoDefaultValueProvided, select } from "../dialogs";
 import { logger } from "../logger";
 import type { Account } from "./shared";
 import type {
-	CredentialStore,
 	LoginOrRefreshResult,
 	UserAuthConfig,
 } from "@cloudflare/workers-auth";
@@ -37,307 +43,499 @@ import type {
 	ComplianceConfig,
 } from "@cloudflare/workers-utils";
 
-export { WRANGLER_KEYRING_SERVICE_NAME } from "@cloudflare/workers-auth/wrangler";
+/** Verglas's WorkOS browser login callback is intentionally fixed and local. */
+export const VERGLAS_AUTH_CALLBACK_URL = "http://localhost:3080/";
+export const VERGLAS_CONFIG_DIR = path.join(os.homedir(), ".verglas");
 
-/**
- * Wrangler's auth layer.
- *
- * Builds the shared auth machinery from `@cloudflare/workers-auth/wrangler`.
- * Almost everything now lives in that package — the config cache, the
- * temporary-terms flow, the account/membership REST calls, and the
- * wrangler-specific wiring that only needs `@cloudflare/workers-utils` (config
- * path, keyring preference, client id, redirect URI, `CLOUDFLARE_ACCOUNT_ID`
- * reader, CI detection, scope catalog, temporary-account storage). Only the
- * primitives that genuinely can't move are injected here:
- *   - the logger;
- *   - the User-Agent string for the account/membership REST calls;
- *   - the interactive `prompt` / `select` (with the `select` prompt's
- *     non-interactive `NoDefaultValueProvided` signal).
- */
-const auth = createWranglerAuth({
-	logger,
-	userAgent: `verglas/${verglasVersion}`,
-	prompt,
-	select,
-	isNoDefaultValueProvidedError: (error) =>
-		error instanceof NoDefaultValueProvided,
-});
+type VerglasAuthConfig = UserAuthConfig & { account_id?: string };
+let activeProfile = "default";
+let cachedAccount: Account | undefined;
+let cachedEmail: string | undefined;
 
-/**
- * Set the active auth profile for all subsequent credential lookups.
- */
-export function setProfile(profile: string): void {
-	auth.setProfile(profile);
+function credentialsPath(profile = activeProfile): string {
+	const suffix =
+		profile === "default" ? "credentials" : `credentials-${profile}`;
+	return path.join(
+		process.env.VERGLAS_CONFIG_DIR ?? VERGLAS_CONFIG_DIR,
+		`${suffix}.json`
+	);
 }
 
-/**
- * Return the active auth profile name.
- */
-export function getActiveProfile(): string {
-	return auth.getActiveProfile();
+/** Public path helper used by diagnostics and tests; credentials never live in ~/.wrangler. */
+export function getAuthConfigFilePath(profile?: string): string {
+	return credentialsPath(profile);
 }
 
-/**
- * The currently-active credential store for the active profile, resolved
- * per-call so runtime preference changes (`wrangler login --use-keyring` /
- * `--no-use-keyring` / `CLOUDFLARE_AUTH_USE_KEYRING` env var) take effect
- * immediately. Consumed by `wrangler whoami` to surface where credentials
- * live.
- */
-export function getCredentialStore(): CredentialStore {
-	return auth.getCredentialStore();
+export function getEncryptedAuthConfigFilePath(profile?: string): string {
+	return credentialsPath(profile).replace(/\.json$/, ".enc");
 }
 
-/**
- * Mark whether `--temporary` is permitted for the current invocation.
- */
-export function setTemporaryAllowed(allowed: boolean): void {
-	auth.setTemporaryAllowed(allowed);
+function readStored(profile = activeProfile): VerglasAuthConfig | undefined {
+	const file = credentialsPath(profile);
+	if (!existsSync(file)) return undefined;
+	try {
+		const parsed: unknown = JSON.parse(readFileSync(file, "utf8"));
+		if (!parsed || typeof parsed !== "object") return undefined;
+		const value = parsed as Record<string, unknown>;
+		if (typeof value.oauth_token !== "string" || value.oauth_token.length === 0)
+			return undefined;
+		return {
+			oauth_token: value.oauth_token,
+			...(typeof value.expiration_time === "string"
+				? { expiration_time: value.expiration_time }
+				: {}),
+			...(typeof value.account_id === "string"
+				? { account_id: value.account_id }
+				: {}),
+			...(Array.isArray(value.scopes)
+				? {
+						scopes: value.scopes.filter(
+							(scope): scope is string => typeof scope === "string"
+						),
+					}
+				: {}),
+		};
+	} catch {
+		return undefined;
+	}
 }
 
-/**
- * Try to read API credentials from environment variables.
- *
- * Delegates to the shared resolver in `@cloudflare/workers-auth`. Wrangler
- * supports the global API key + email pair in addition to API tokens, so the
- * default (`allowGlobalAuthKey: true`) is used.
- *
- * Authentication priority (highest to lowest):
- * 1. Global API Key + Email (CLOUDFLARE_API_KEY + CLOUDFLARE_EMAIL)
- * 2. API Token (CLOUDFLARE_API_TOKEN)
- * 3. OAuth token from local state (via `wrangler login`) - not handled here
- */
-export function getAuthFromEnv(): ApiCredentials | undefined {
-	return getAuthFromEnvShared();
+/** Write credentials in the same directory and atomically replace the target. */
+function writeStored(config: VerglasAuthConfig, profile = activeProfile): void {
+	const directory = path.dirname(credentialsPath(profile));
+	mkdirSync(directory, { recursive: true, mode: 0o700 });
+	chmodSync(directory, 0o700);
+	const target = credentialsPath(profile);
+	const temporary = `${target}.${process.pid}.${Date.now()}.tmp`;
+	const descriptor = openSync(temporary, "wx", 0o600);
+	try {
+		writeSync(descriptor, JSON.stringify(config) + "\n", undefined, "utf8");
+		fsyncSync(descriptor);
+		closeSync(descriptor);
+		chmodSync(temporary, 0o600);
+		renameSync(temporary, target);
+		chmodSync(target, 0o600);
+	} catch (error) {
+		try {
+			closeSync(descriptor);
+		} catch {
+			/* already closed */
+		}
+		try {
+			unlinkSync(temporary);
+		} catch {
+			/* best effort cleanup */
+		}
+		throw error;
+	}
 }
 
-// ---------------------------------------------------------------------------
-// Scope catalog
-// ---------------------------------------------------------------------------
-
-// The Cloudflare scope catalog (the `DefaultScopes` data, the `Scope` union,
-// the mutable `DefaultScopeKeys` live binding, and `setLoginScopeKeys` /
-// `validateScopeKeys`) now lives in `@cloudflare/workers-auth/wrangler` so
-// `createWranglerAuth` can resolve the default scopes without them being
-// injected. They're re-exported here so wrangler's historical `from "../user"`
-// import path (including the e2e scope test) keeps working. The presentation
-// helpers below (`listScopes` / `printScopes`) stay in wrangler because they
-// render via wrangler's richer `logger.table`.
-export { DefaultScopeKeys, setLoginScopeKeys, validateScopeKeys, type Scope };
-
-export function listScopes(message = "💁 Available scopes:"): void {
-	logger.log(message);
-	printScopes(DefaultScopeKeys);
+export function readAuthCredentials(): UserAuthConfig | undefined {
+	return readStored();
 }
 
-/**
- * Get the scopes granted to the current OAuth token. Returns undefined when
- * the user is not logged in via OAuth (e.g. env-based auth).
- */
-export function getScopes(): Scope[] | undefined {
-	// Routes through the flow, which resolves the keyring-aware storage for
-	// the active profile via `storageFactory`, so this honours both the
-	// active profile and the plaintext/encrypted preference.
-	return auth.getScopes() as Scope[] | undefined;
+export function writeAuthCredentials(config: UserAuthConfig): void {
+	writeStored(config);
 }
 
-export function printScopes(scopes: Scope[]) {
-	const data = scopes.map((scope: Scope) => ({
-		Scope: scope,
-		Description: DefaultScopes[scope],
-	}));
-
-	logger.table(data);
+/** Compatibility aliases retained for code that imported Wrangler's helpers. */
+export function readAuthConfigFile(
+	profile?: string
+): UserAuthConfig | undefined {
+	return readStored(profile);
 }
 
-// ---------------------------------------------------------------------------
-// Credential resolution (combines env + stored OAuth token)
-// ---------------------------------------------------------------------------
-
-export function getAPIToken(): ApiCredentials | undefined {
-	return auth.getAPIToken();
+export function writeAuthConfigFile(
+	config: UserAuthConfig,
+	profile?: string
+): void {
+	writeStored(config, profile);
 }
 
-/**
- * Throw an error if there is no API token available.
- *
- * Implemented in `@cloudflare/workers-auth/wrangler`; re-exported here so the
- * historical `from "../user"` import path (and test mocks/spies) keep working.
- */
-export function requireApiToken(): ApiCredentials {
-	return auth.requireApiToken();
-}
-
-// ---------------------------------------------------------------------------
-// Thin wrappers preserving the historical call signatures. The default scope
-// catalog (below) is applied inside the shared auth layer via the injected
-// `defaultScopeKeys`.
-// ---------------------------------------------------------------------------
-
-type WranglerLoginProps = {
-	scopes?: Scope[];
-	browser?: boolean;
-	callbackHost?: string;
-	callbackPort?: number;
-	profile?: string;
-	/**
-	 * When `true`, use the OAuth 2.0 Device Authorization Grant (RFC 8628)
-	 * instead of the authorization-code-with-PKCE flow.
-	 */
-	device?: boolean;
+export const WRANGLER_KEYRING_SERVICE_NAME = "verglas";
+export {
+	DefaultScopes,
+	DefaultScopeKeys,
+	setLoginScopeKeys,
+	validateScopeKeys,
+	type Scope,
 };
 
+export function setProfile(profile: string): void {
+	activeProfile = profile;
+}
+
+export function getActiveProfile(): string {
+	return activeProfile;
+}
+
+export function setTemporaryAllowed(_allowed: boolean): void {
+	// Verglas does not mint Cloudflare temporary preview accounts.
+}
+
+const credentialStore = {
+	kind: "file" as const,
+	read: () => readStored(),
+	write: (config: UserAuthConfig) => writeStored(config),
+	clear: () => {
+		const file = credentialsPath();
+		const existed = existsSync(file);
+		if (existed) unlinkSync(file);
+		return existed;
+	},
+	path: () => credentialsPath(),
+	describe: () => `${credentialsPath()} (mode 0600)`,
+};
+
+export function getCredentialStore() {
+	return credentialStore;
+}
+
+/** Verglas credentials take precedence; Cloudflare names remain read-only compatibility aliases. */
+export function getAuthFromEnv(): ApiCredentials | undefined {
+	const token = process.env.VERGLAS_API_TOKEN;
+	if (token) return { apiToken: token };
+	return getCloudflareAuthFromEnv();
+}
+
+export function getAPIToken(): ApiCredentials | undefined {
+	const envCredentials = getAuthFromEnv();
+	if (envCredentials) return envCredentials;
+	const stored = readStored();
+	if (!stored?.oauth_token) return undefined;
+	if (
+		stored.expiration_time &&
+		Date.parse(stored.expiration_time) <= Date.now()
+	)
+		return undefined;
+	return { apiToken: stored.oauth_token };
+}
+
+export function requireApiToken(): ApiCredentials {
+	const credentials = getAPIToken();
+	if (!credentials)
+		throw new UserError("No Verglas API token found. Run `verglas login`.", {
+			telemetryMessage: "user auth missing api token",
+		});
+	return credentials;
+}
+
+function controlPlaneBase(complianceConfig: ComplianceConfig = {}): string {
+	return getVerglasApiBaseUrl(complianceConfig)
+		.replace(/\/client\/v4\/?$/, "")
+		.replace(/\/+$/, "");
+}
+
+function jwtExpiry(token: string): string | undefined {
+	try {
+		const part = token.split(".")[1];
+		if (!part) return undefined;
+		const payload = JSON.parse(
+			Buffer.from(part, "base64url").toString("utf8")
+		) as { exp?: unknown };
+		return typeof payload.exp === "number"
+			? new Date(payload.exp * 1000).toISOString()
+			: undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function readRequestBody(
+	request: IncomingMessage,
+	limit = 8192
+): Promise<string> {
+	return new Promise((resolve, reject) => {
+		let body = "";
+		request.setEncoding("utf8");
+		request.on("data", (chunk: string) => {
+			body += chunk;
+			if (body.length > limit)
+				reject(new Error("login callback payload is too large"));
+		});
+		request.on("end", () => resolve(body));
+		request.on("error", reject);
+	});
+}
+
+function callbackPage(): string {
+	// The fragment never traverses the network. Replace the URL before posting it
+	// to localhost so browser history and referrer headers do not retain the token.
+	return `<!doctype html><meta charset="utf-8"><title>Verglas login</title><p>Completing Verglas login…</p><script>
+const hash = new URLSearchParams(location.hash.slice(1));
+history.replaceState(null, "", location.pathname);
+const token = hash.get("access_token");
+fetch("/callback", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({access_token:token})})
+  .then(r => r.ok ? r.text() : Promise.reject(new Error("login failed")))
+  .then(message => document.body.innerHTML = "<p>" + message + " You can close this tab.</p>")
+  .catch(() => document.body.innerHTML = "<p>Verglas login failed. Return to your terminal.</p>");
+</script>`;
+}
+
+async function receiveBrowserToken(
+	loginUrl: string,
+	browser: boolean
+): Promise<string> {
+	return new Promise((resolve, reject) => {
+		let settled = false;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const server = createServer(
+			async (request: IncomingMessage, response: ServerResponse) => {
+				if (
+					request.method === "GET" &&
+					(request.url === "/" || request.url === "/index.html")
+				) {
+					response.writeHead(200, {
+						"content-type": "text/html; charset=utf-8",
+						"cache-control": "no-store",
+					});
+					response.end(callbackPage());
+					return;
+				}
+				if (request.method === "POST" && request.url === "/callback") {
+					try {
+						const body = JSON.parse(await readRequestBody(request)) as {
+							access_token?: unknown;
+						};
+						if (
+							typeof body.access_token !== "string" ||
+							body.access_token.length < 8
+						)
+							throw new Error("no access token was returned");
+						response.writeHead(200, {
+							"content-type": "text/plain; charset=utf-8",
+							"cache-control": "no-store",
+						});
+						response.end("Verglas login complete.");
+						finish(undefined, body.access_token);
+					} catch (error) {
+						response.writeHead(400, {
+							"content-type": "text/plain; charset=utf-8",
+							"cache-control": "no-store",
+						});
+						response.end("Verglas login failed.");
+						finish(error instanceof Error ? error : new Error(String(error)));
+					}
+					return;
+				}
+				response.writeHead(404);
+				response.end();
+			}
+		);
+		const finish = (error?: Error, token?: string) => {
+			if (settled) return;
+			settled = true;
+			if (timer) clearTimeout(timer);
+			server.close(() => (error ? reject(error) : resolve(token!)));
+		};
+		server.once("error", (error) =>
+			finish(error instanceof Error ? error : new Error(String(error)))
+		);
+		server.listen(3080, "localhost", async () => {
+			if (!browser)
+				logger.log(
+					`Open this URL in your browser to log in to Verglas:\n${loginUrl}`
+				);
+			try {
+				if (browser) await openInBrowser(loginUrl, logger);
+			} catch (error) {
+				finish(error instanceof Error ? error : new Error(String(error)));
+			}
+		});
+		timer = setTimeout(
+			() =>
+				finish(
+					new UserError("Timed out waiting for Verglas login.", {
+						telemetryMessage: "verglas auth timeout",
+					})
+				),
+			120000
+		);
+	});
+}
+
 export async function login(
-	complianceConfig: ComplianceConfig,
-	props?: WranglerLoginProps
+	_complianceConfig: ComplianceConfig,
+	props?: { browser?: boolean; profile?: string; [key: string]: unknown }
 ): Promise<boolean> {
-	return auth.login(complianceConfig, props);
+	if (props?.callbackHost !== undefined && props.callbackHost !== "localhost") {
+		throw new UserError("Verglas WorkOS login only supports localhost:3080.", {
+			telemetryMessage: "verglas auth callback host unsupported",
+		});
+	}
+	if (props?.callbackPort !== undefined && props.callbackPort !== 3080) {
+		throw new UserError("Verglas WorkOS login only supports localhost:3080.", {
+			telemetryMessage: "verglas auth callback port unsupported",
+		});
+	}
+	if (props?.device === true) {
+		throw new UserError(
+			"Verglas WorkOS login requires a browser and localhost:3080; device login is not supported.",
+			{ telemetryMessage: "verglas device login unsupported" }
+		);
+	}
+	if (getAuthFromEnv()) {
+		logger.error(
+			"You are already authenticated with an API token; unset it to use `verglas login`."
+		);
+		return false;
+	}
+	const profile = props?.profile ?? "default";
+	const loginUrl = `${controlPlaneBase(_complianceConfig)}/v1/auth/login?return_to=${encodeURIComponent(VERGLAS_AUTH_CALLBACK_URL)}`;
+	logger.log("Attempting to log in to Verglas through WorkOS…");
+	const token = await receiveBrowserToken(loginUrl, props?.browser ?? true);
+	writeStored(
+		{ oauth_token: token, expiration_time: jwtExpiry(token) },
+		profile
+	);
+	logger.log("Successfully logged in to Verglas.");
+	return true;
 }
 
-export async function logout(profile?: string): Promise<void> {
-	return auth.logout(profile);
-}
-
-/**
- * Attempt to ensure the user is authenticated, refreshing or prompting for
- * login as needed.
- *
- * @param complianceConfig - Compliance region configuration
- * @param props - Optional overrides for scopes, browser behaviour, etc.
- * @returns A {@link LoginOrRefreshResult} indicating success or the specific
- *   reason authentication could not be established.
- */
-export async function loginOrRefreshIfRequired(
-	complianceConfig: ComplianceConfig,
-	props?: WranglerLoginProps
-): Promise<LoginOrRefreshResult> {
-	return auth.loginOrRefreshIfRequired(complianceConfig, props);
+export async function logout(profile = "default"): Promise<void> {
+	const file = credentialsPath(profile);
+	if (existsSync(file)) unlinkSync(file);
+	if (profile === activeProfile) cachedAccount = undefined;
+	logger.log("Successfully logged out of Verglas.");
 }
 
 export async function getOAuthTokenFromLocalState(): Promise<
 	string | undefined
 > {
-	return auth.getOAuthTokenFromLocalState();
+	const credentials = getAPIToken();
+	return credentials && "apiToken" in credentials
+		? credentials.apiToken
+		: undefined;
 }
 
-export {
-	getAuthConfigFilePath,
-	getEncryptedAuthConfigFilePath,
-	readAuthConfigFile,
-	writeAuthConfigFile,
-} from "@cloudflare/workers-auth/wrangler";
-export type { UserAuthConfig } from "@cloudflare/workers-auth";
-
-/**
- * Read stored OAuth credentials via the active credential store (plaintext
- * TOML by default; encrypted file when `--use-keyring` is in effect).
- * Returns `undefined` when no credentials are stored — callers treat the
- * `undefined` as "not logged in via local OAuth". Genuine errors (e.g.
- * filesystem permission failures, corrupted plaintext TOML) still throw —
- * see the `ConfigStorage<T>` contract in `@cloudflare/workers-auth`.
- *
- * Renamed from `readAuthConfigFile` (the "File" suffix no longer reflects
- * the implementation — when keyring storage is active there is no plaintext
- * file on disk).
- */
-export function readAuthCredentials(): UserAuthConfig | undefined {
-	return auth.readAuthCredentials();
+export function getScopes(): Scope[] | undefined {
+	return readStored()?.scopes as Scope[] | undefined;
 }
 
-/**
- * Persist OAuth credentials via the active credential store.
- *
- * Renamed from `writeAuthConfigFile` (see {@link readAuthCredentials}).
- */
-export function writeAuthCredentials(config: UserAuthConfig): void {
-	auth.writeAuthCredentials(config);
+export function listScopes(message = "Available Verglas scopes:"): void {
+	logger.log(message);
+	logger.table(
+		DefaultScopeKeys.map((scope) => ({
+			Scope: scope,
+			Description: DefaultScopes[scope],
+		}))
+	);
 }
-// `PKCE_CHARSET` is re-exported for any external consumers that used to
-// import it from this barrel.
-export { PKCE_CHARSET } from "@cloudflare/workers-auth";
 
-// ---------------------------------------------------------------------------
-// Account selection
-// ---------------------------------------------------------------------------
+export function printScopes(scopes: Scope[]): void {
+	logger.table(
+		scopes.map((scope) => ({ Scope: scope, Description: DefaultScopes[scope] }))
+	);
+}
 
-/**
- * Returns the active account ID without side effects.
- *
- * Resolves the account ID from static sources only — no API calls, no
- * interactive prompts. Tries the following sources in order:
- * 1. `config.account_id` from the wrangler configuration file
- * 2. `CLOUDFLARE_ACCOUNT_ID` environment variable
- * 3. Cached account from a previous interactive selection
- *
- * @param config - The config object potentially containing an `account_id`
- * @returns The active account ID, or `undefined` if none can be determined
- */
 export function getActiveAccountId(config: {
 	account_id?: string;
 }): string | undefined {
-	return auth.getActiveAccountId(config);
+	return (
+		config.account_id ||
+		process.env.VERGLAS_ACCOUNT_ID ||
+		process.env.CLOUDFLARE_ACCOUNT_ID ||
+		readStored()?.account_id ||
+		cachedAccount?.id
+	);
 }
 
-/**
- * Resolves the account ID to use for API requests.
- *
- * First tries static sources via {@link getActiveAccountId} (config, env var,
- * cache). If none are available, falls back to fetching accounts from the API:
- * - Auto-selects if only one account is available
- * - Prompts the user to select an account interactively if multiple are available
- *
- * When an account is resolved via API fetch or interactive prompt,
- * it is cached for subsequent calls.
- *
- * @param config - Configuration containing an optional `account_id` and compliance settings
- * @returns The resolved account ID
- * @throws {UserError} If in a non-interactive environment and multiple accounts are
- *   available (the user must set `account_id` in config or `CLOUDFLARE_ACCOUNT_ID` env var)
- * @throws {UserError} If no accounts are found for the authenticated user
- */
+export async function fetchAllAccounts(
+	_complianceConfig: ComplianceConfig,
+	options?: { throwOnEmpty?: boolean }
+): Promise<Account[]> {
+	const credentials = requireApiToken();
+	const token =
+		"apiToken" in credentials ? credentials.apiToken : credentials.authKey;
+	const response = await fetch(`${controlPlaneBase(_complianceConfig)}/v1/me`, {
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	if (!response.ok)
+		throw new UserError(
+			`Verglas account discovery failed (${response.status}).`,
+			{ telemetryMessage: "verglas account discovery failed" }
+		);
+	const body = (await response.json()) as {
+		identity?: { email?: unknown };
+		organizations?: Array<{ id?: unknown; name?: unknown }>;
+	};
+	if (typeof body.identity?.email === "string")
+		cachedEmail = body.identity.email;
+	const accounts = (body.organizations ?? []).flatMap((organization) =>
+		typeof organization.id === "string" && typeof organization.name === "string"
+			? [{ id: organization.id, name: organization.name }]
+			: []
+	);
+	if (accounts.length === 0 && options?.throwOnEmpty !== false)
+		throw new UserError(
+			"No Verglas organizations are available for this account.",
+			{ telemetryMessage: "verglas account discovery empty" }
+		);
+	return accounts;
+}
+
 export async function getOrSelectAccountId(
 	config: ComplianceConfig & { account_id?: string }
 ): Promise<string> {
-	return auth.getOrSelectAccountId(config);
-}
-
-/**
- * Ensures the user is logged in and resolves a valid account ID.
- *
- * First checks/refreshes authentication, then delegates to
- * {@link getOrSelectAccountId} to resolve the account.
- *
- * Implemented in `@cloudflare/workers-auth/wrangler`; re-exported here so the
- * historical `from "../user"` import path (and test mocks/spies) keep working.
- *
- * @param config - Configuration containing an optional `account_id` and compliance settings
- * @returns The resolved account ID
- * @throws {UserError} If the user is not logged in and cannot authenticate
- * @throws {UserError} If no account ID can be resolved (see {@link getOrSelectAccountId})
- */
-export async function requireAuth(
-	config: ComplianceConfig & {
-		account_id?: string;
+	const configured = getActiveAccountId(config);
+	if (configured) return configured;
+	const accounts = await fetchAllAccounts(config);
+	if (accounts.length === 1) {
+		cachedAccount = accounts[0];
+		return accounts[0].id;
 	}
+	try {
+		const selected = await select("Select a Verglas organization", {
+			choices: accounts.map((account) => ({
+				title: `${account.name} (${account.id})`,
+				value: account.id,
+			})),
+		});
+		cachedAccount = accounts.find((account) => account.id === selected);
+		return selected;
+	} catch (error) {
+		if (error instanceof NoDefaultValueProvided)
+			throw new UserError(
+				"Set VERGLAS_ACCOUNT_ID or account_id in your config when running non-interactively.",
+				{ telemetryMessage: "verglas account missing" }
+			);
+		throw error;
+	}
+}
+
+export async function requireAuth(
+	config: ComplianceConfig & { account_id?: string }
 ): Promise<string> {
-	return auth.requireAuth(config);
+	if (!getAPIToken())
+		throw new UserError(
+			"Not authenticated with Verglas. Run `verglas login`.",
+			{ telemetryMessage: "verglas auth required" }
+		);
+	return getOrSelectAccountId(config);
 }
 
-/**
- * Fetches the set of accounts that the current login auth can actually use.
- */
-export async function fetchAllAccounts(
-	complianceConfig: ComplianceConfig,
-	options?: { throwOnEmpty?: boolean }
-): Promise<Account[]> {
-	return auth.fetchAllAccounts(complianceConfig, options);
+export async function loginOrRefreshIfRequired(
+	config: ComplianceConfig,
+	props?: { browser?: boolean }
+): Promise<LoginOrRefreshResult> {
+	if (getAPIToken()) return { loggedIn: true };
+	if (!process.stdin.isTTY)
+		return { loggedIn: false, reason: "no-credentials-non-interactive" };
+	try {
+		return (await login(config, props))
+			? { loggedIn: true }
+			: { loggedIn: false, reason: "no-credentials-login-failed" };
+	} catch {
+		return { loggedIn: false, reason: "no-credentials-login-failed" };
+	}
 }
 
-/**
- * Retrieves the cached account details for the active profile.
- *
- * @returns The cached account if present, `undefined` otherwise
- */
-export function getAccountFromCache(): undefined | Account {
-	return auth.getAccountFromCache();
+export function getAccountFromCache(): Account | undefined {
+	return cachedAccount;
 }
+
+export function getVerglasUserEmail(): string | undefined {
+	return cachedEmail;
+}
+
+export type { UserAuthConfig };

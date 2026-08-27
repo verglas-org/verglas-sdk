@@ -7,8 +7,7 @@
 </section>
 
 `verglas` is a command-line tool for building and deploying Verglas Workers.
-It retains the Workers API and configuration model, and can target a
-Cloudflare-compatible API when `CLOUDFLARE_API_BASE_URL` is set.
+It retains the Workers API and configuration model while targeting Verglas.
 
 ## Quick Start
 
@@ -71,10 +70,12 @@ the [Cloudflare Workers API](https://developers.cloudflare.com/workers/wrangler/
 ## API endpoint
 
 Verglas uses `https://api.verglas.dev/client/v4` by default. Set
-`VERGLAS_API_BASE_URL` to target another Verglas-compatible API. The existing
-`CLOUDFLARE_API_BASE_URL` (and deprecated `CF_API_BASE_URL`) variables remain
-supported and take precedence when `VERGLAS_API_BASE_URL` is not set.
+`VERGLAS_API_BASE_URL` to target another Verglas-compatible API.
 
-Set `VERGLAS_API_TOKEN` and `VERGLAS_ACCOUNT_ID` for non-interactive use. The
-legacy `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` names remain accepted
-for compatibility.
+Set `VERGLAS_API_TOKEN` and `VERGLAS_ACCOUNT_ID` for non-interactive use.
+
+Run `verglas login` for interactive WorkOS browser authentication. Verglas
+listens only on `http://localhost:3080` for the short-lived browser handoff and
+stores the resulting access token atomically at `~/.verglas/credentials.json`
+with mode `0600`. `verglas logout` removes that local credential; it never
+touches Wrangler's credential directory.

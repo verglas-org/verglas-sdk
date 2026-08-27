@@ -5,6 +5,9 @@ import path from "node:path";
  * Dependencies that _are not_ bundled along with wrangler
  */
 export const EXTERNAL_DEPENDENCIES = [
+	// ComponentizeJS ships a StarlingMonkey/Wizer WASM toolchain and must remain
+	// an installed runtime dependency rather than being bundled into the CLI.
+	"@bytecodealliance/componentize-js",
 	// Wrangler depends on a pinned version of esbuild.
 	"esbuild",
 

@@ -13,8 +13,7 @@ node packages/verglas/bin/verglas.js --help
 
 The CLI targets `https://api.verglas.dev/client/v4` by default. Configure
 non-interactive access with `VERGLAS_API_TOKEN` and `VERGLAS_ACCOUNT_ID`.
-`VERGLAS_API_BASE_URL` overrides the endpoint; the corresponding legacy
-Cloudflare-compatible environment variables remain accepted.
+`VERGLAS_API_BASE_URL` overrides the endpoint.
 
 The source trees for Create Cloudflare, Miniflare, Chrome DevTools patches,
 and Pages Shared are deliberately not vendored in this repository. Published

@@ -1,8 +1,3 @@
-import { getCloudflareAuthUseKeyringFromEnv } from "@cloudflare/workers-auth";
-import {
-	readUserPreferences,
-	setKeyringPreference,
-} from "@cloudflare/workers-auth/wrangler";
 import { CommandLineArgsError, UserError } from "@cloudflare/workers-utils";
 import { readConfig } from "../config";
 import { createCommand, createNamespace } from "../core/create-command";
@@ -22,7 +17,7 @@ import {
 import { whoami } from "./whoami";
 
 /**
- * Represents the authentication information returned by `wrangler auth token --json`.
+ * Represents the authentication information returned by `verglas auth token --json`.
  */
 export type AuthTokenInfo =
 	| { type: "oauth"; token: string }
@@ -52,13 +47,13 @@ export const oauthArgs = {
 		describe: "Use the port for the temporary login callback server.",
 		type: "number",
 		requiresArg: false,
-		default: 8976,
+		default: 3080,
 	},
 } as const;
 
 export const loginCommand = createCommand({
 	metadata: {
-		description: "🔓 Login through the configured compatible OAuth provider",
+		description: "🔓 Login through WorkOS",
 		owner: "Workers: Authoring and Testing",
 		status: "stable",
 		category: "Account",
@@ -85,7 +80,7 @@ export const loginCommand = createCommand({
 		},
 		device: {
 			describe:
-				"Use the OAuth 2.0 Device Authorization Grant (RFC 8628) instead of the localhost callback flow. Useful in containers, remote SSH sessions, or other environments where localhost:8976 is unreachable from your browser.",
+				"Reserved for compatibility; Verglas WorkOS login uses the localhost:3080 browser handoff.",
 			type: "boolean",
 			default: false,
 		},
@@ -93,7 +88,7 @@ export const loginCommand = createCommand({
 	validateArgs(args) {
 		if (args.profile) {
 			throw new CommandLineArgsError(
-				"--profile cannot be used with the login command, as `wrangler login` is reserved for default, global auth. If you want to create or activate a named profile, run `wrangler auth create` or `wrangler auth activate`.",
+				"--profile cannot be used with the login command, as `verglas login` is reserved for default, global auth. If you want to create or activate a named profile, run `verglas auth create` or `verglas auth activate`.",
 				{
 					telemetryMessage: "profile flag with login",
 				}
@@ -108,7 +103,7 @@ export const loginCommand = createCommand({
 		// `--no-use-keyring` has persisted any credential-storage state.
 		if (
 			args.device &&
-			(args.callbackHost !== "localhost" || args.callbackPort !== 8976)
+			(args.callbackHost !== "localhost" || args.callbackPort !== 3080)
 		) {
 			throw new CommandLineArgsError(
 				"`--callback-host` and `--callback-port` cannot be used with `--device`; the device authorization flow does not use a local callback server.",
@@ -131,15 +126,6 @@ export const loginCommand = createCommand({
 		if (args.scopesList) {
 			listScopes();
 			return;
-		}
-
-		// Persist `--use-keyring` / `--no-use-keyring` before doing the login
-		// so the OAuth callback writes credentials to the requested backend.
-		// Delegates to the same logic as `wrangler auth keyring enable|disable`
-		// (env-override warning, opt-out scrub of all encrypted profiles, and
-		// eager validation + rollback of an unusable opt-in).
-		if (args.useKeyring !== undefined) {
-			setKeyringPreference(args.useKeyring, { logger, getCredentialStore });
 		}
 
 		// Validate `--scopes` up front so we can share a single `login(...)`
@@ -179,7 +165,7 @@ export const loginCommand = createCommand({
 
 export const logoutCommand = createCommand({
 	metadata: {
-		description: "🚪 Logout from the configured compatible OAuth provider",
+		description: "🚪 Logout from Verglas",
 		owner: "Workers: Authoring and Testing",
 		status: "stable",
 		category: "Account",
@@ -193,7 +179,7 @@ export const logoutCommand = createCommand({
 	validateArgs(args) {
 		if (args.profile) {
 			throw new CommandLineArgsError(
-				"--profile cannot be used with the logout command, as `wrangler logout` is reserved for default, global auth. If you want to delete or deactivate a named profile, run `wrangler auth delete` or `wrangler auth deactivate`.",
+				"--profile cannot be used with the logout command, as `verglas logout` is reserved for default, global auth. If you want to delete or deactivate a named profile, run `verglas auth delete` or `verglas auth deactivate`.",
 				{
 					telemetryMessage: "profile flag with logout",
 				}
@@ -303,10 +289,10 @@ export const authTokenCommand = createCommand({
 
 		if (authFromEnv) {
 			if ("apiToken" in authFromEnv) {
-				// API token from CLOUDFLARE_API_TOKEN
+				// API token from VERGLAS_API_TOKEN (or the Cloudflare compatibility alias)
 				result = { type: "api_token", token: authFromEnv.apiToken };
 			} else {
-				// Global API key + email from CLOUDFLARE_API_KEY + CLOUDFLARE_EMAIL
+				// Global API key + email from the Cloudflare compatibility aliases
 				result = {
 					type: "api_key",
 					key: authFromEnv.authKey,
@@ -314,11 +300,11 @@ export const authTokenCommand = createCommand({
 				};
 			}
 		} else {
-			// OAuth token from local state (wrangler login)
+			// WorkOS access token from local state (verglas login)
 			const token = await getOAuthTokenFromLocalState();
 			if (!token) {
 				throw new UserError(
-					"Not logged in. Please run `wrangler login` to authenticate.",
+					"Not logged in. Please run `verglas login` to authenticate.",
 					{ telemetryMessage: "user auth token not logged in" }
 				);
 			}
@@ -378,45 +364,10 @@ export const authKeyringCommand = createCommand({
 			);
 		}
 	},
-	async handler(args) {
-		// No action: report the current setting (read-only — never mutates the
-		// preference, so it is always safe to run).
-		if (args.action === undefined) {
-			const envOverride = getCloudflareAuthUseKeyringFromEnv();
-			const persisted = readUserPreferences().keyring_enabled === true;
-			const effective = envOverride ?? persisted;
-			logger.log(
-				`Keyring storage is ${effective ? "enabled" : "disabled"}` +
-					(envOverride !== undefined
-						? ` (overridden by CLOUDFLARE_AUTH_USE_KEYRING=${envOverride}; persisted preference: ${
-								persisted ? "enabled" : "disabled"
-							})`
-						: "") +
-					"."
-			);
-			logger.log(
-				`Credentials are currently stored in: ${getCredentialStore().describe()}`
-			);
-			return;
-		}
-
-		const enable = args.action === "enable";
-		const { enabled } = setKeyringPreference(enable, {
-			logger,
-			getCredentialStore,
-		});
-		if (enable) {
-			if (enabled) {
-				logger.log(
-					"Keyring storage enabled. New OAuth credentials will be encrypted with a key held in your OS keychain. Run `wrangler login` or `wrangler auth create <name>` to (re-)authenticate."
-				);
-			}
-			// If `enabled` is false here the opt-in was rolled back;
-			// `setKeyringPreference` already warned about why.
-		} else {
-			logger.log(
-				"Keyring storage disabled. New OAuth credentials will be stored in the plaintext config file."
-			);
-		}
+	async handler() {
+		logger.log(
+			`Verglas stores WorkOS credentials in ${getCredentialStore().describe()}. ` +
+				"OS keyring preference flags are not used by the Verglas auth flow."
+		);
 	},
 });
