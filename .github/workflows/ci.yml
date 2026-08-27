@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   cli:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, fly]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
