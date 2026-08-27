@@ -6,7 +6,14 @@ import asyncio
 import hashlib
 import unittest
 
-from workers import DurableObjectState, Request, Response, ServiceBinding, WebSocketPair
+from workers import (
+    DurableObjectState,
+    Request,
+    Response,
+    ScheduledController,
+    ServiceBinding,
+    WebSocketPair,
+)
 from workers._runtime import Environment, Storage, event_scope, leave_event_scope
 
 
@@ -96,6 +103,13 @@ class WorkerSurfaceTests(unittest.TestCase):
             {"GREETING": "hello"},
             [{"name": "COUNTER", "class_name": "Counter"}],
         )
+
+    def test_scheduled_controller_preserves_event_metadata(self) -> None:
+        """Cron handlers receive the exact deadline and configured expression."""
+        controller = ScheduledController(1_787_867_200_000, "*/5 * * * *")
+
+        self.assertEqual(controller.scheduled_time, 1_787_867_200_000)
+        self.assertEqual(controller.cron, "*/5 * * * *")
 
     def test_storage_round_trips_deterministic_structured_values(self) -> None:
         """Storage preserves supported values through canonical byte encoding."""

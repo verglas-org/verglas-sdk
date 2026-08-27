@@ -1319,6 +1319,15 @@ class WorkerEntrypoint:
         self.env = env
 
 
+class ScheduledController:
+    """Cloudflare-shaped metadata supplied to a scheduled Worker handler."""
+
+    def __init__(self, scheduled_time: int, cron: str):
+        """Record the logical event deadline and exact configured cron string."""
+        self.scheduled_time = scheduled_time
+        self.cron = cron
+
+
 class DurableObject:
     """Base class for Cloudflare Python Durable Object classes."""
 

@@ -25,6 +25,7 @@ from ._runtime import (
     ExecutionContext,
     Request,
     Response,
+    ScheduledController,
     Storage,
     WebSocket,
     WorkerEntrypoint,
@@ -237,6 +238,29 @@ class Worker(exports.Worker):
                 response = _invoke_user(callback, (public_request,), execution)
                 return _to_wit_response(response)
             return _entry_response(callback_or_class, public_request, execution)
+        except Exception as error:
+            _raise_handler_error(error)
+
+    def scheduled(self, scheduled_epoch_millis: int, cron: str) -> None:
+        """Dispatch one stateless Worker cron event through Default.scheduled."""
+        try:
+            module = _configured_module()
+            entrypoint = getattr(module, "Default", None)
+            if (
+                entrypoint is None
+                or not inspect.isclass(entrypoint)
+                or not issubclass(entrypoint, WorkerEntrypoint)
+            ):
+                raise TypeError("Python scheduled Worker must define Default(WorkerEntrypoint)")
+            if _environment is None:
+                raise RuntimeError("Python Worker environment was not configured")
+            execution = ExecutionContext()
+            instance = entrypoint(execution, _environment)
+            callback = getattr(instance, "scheduled", None)
+            if callback is None or not callable(callback):
+                raise TypeError("Default(WorkerEntrypoint) must define scheduled(...)")
+            controller = ScheduledController(int(scheduled_epoch_millis), str(cron))
+            _invoke_user(callback, (controller, _environment, execution), execution)
         except Exception as error:
             _raise_handler_error(error)
 

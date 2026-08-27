@@ -1,0 +1,5 @@
+{
+  "name": "python-e2e",
+  "main": "worker.py",
+  "compatibility_date": "2026-08-27"
+}
