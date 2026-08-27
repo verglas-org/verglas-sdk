@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, it, vi } from "vitest";
 import {
 	extractAccountTag,
 	hasMorePages,
@@ -6,6 +6,10 @@ import {
 	parseRetryAfterValue,
 	throwFetchError,
 } from "../src/cfetch";
+import {
+	getCloudflareApiBaseUrl,
+	getVerglasApiBaseUrl,
+} from "../src/environment-variables/misc-variables";
 import { APIError } from "../src/parse";
 
 /**
@@ -62,6 +66,42 @@ describe("extractAccountTag", () => {
 		expect(extractAccountTag("/accounts/foo")).toBe("foo");
 		expect(extractAccountTag("/accounts/bar/")).toBe("bar");
 		expect(extractAccountTag("/accounts/baz/more")).toBe("baz");
+	});
+});
+
+describe("API base URL overrides", () => {
+	it("defaults to the Verglas API", ({ expect }) => {
+		expect(getVerglasApiBaseUrl({})).toBe("https://api.verglas.dev/client/v4");
+		expect(getCloudflareApiBaseUrl({})).toBe(
+			"https://api.cloudflare.com/client/v4"
+		);
+	});
+
+	it("uses the Verglas override before the Cloudflare compatibility override", ({
+		expect,
+	}) => {
+		vi.stubEnv("VERGLAS_API_BASE_URL", "https://api.verglas.example/client/v4");
+		vi.stubEnv(
+			"CLOUDFLARE_API_BASE_URL",
+			"https://api.cloudflare.example/client/v4"
+		);
+
+		expect(getVerglasApiBaseUrl({})).toBe(
+			"https://api.verglas.example/client/v4"
+		);
+		expect(getCloudflareApiBaseUrl({})).toBe(
+			"https://api.verglas.example/client/v4"
+		);
+	});
+
+	it("keeps the Cloudflare override when no Verglas override is set", ({
+		expect,
+	}) => {
+		vi.stubEnv("CLOUDFLARE_API_BASE_URL", "https://api.cloudflare.example/v4");
+
+		expect(getCloudflareApiBaseUrl({})).toBe(
+			"https://api.cloudflare.example/v4"
+		);
 	});
 });
 

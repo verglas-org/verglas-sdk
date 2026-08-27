@@ -1,0 +1,7 @@
+Verglas includes source code copied from the Cloudflare Workers SDK,
+including Wrangler. Copyright © Cloudflare, Inc. and contributors.
+
+The copied source remains available under the MIT OR Apache-2.0 license. See
+[LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE).
+
+Upstream project: https://github.com/cloudflare/workers-sdk

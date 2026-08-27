@@ -1734,13 +1734,13 @@ importers:
         version: 2.2.0
       tsup:
         specifier: 8.3.0
-        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
+        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(supports-color@9.2.2)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
       typescript:
         specifier: catalog:default
         version: 5.8.3
       vitest:
         specifier: catalog:default
-        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.15.17)(@vitest/ui@4.1.0)(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.23.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0))
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.15.17)(@vitest/ui@4.1.0)(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0))
 
   packages/build-output-utils:
     dependencies:
@@ -1820,7 +1820,7 @@ importers:
         version: 0.2.16
       tsup:
         specifier: 8.3.0
-        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
+        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(supports-color@9.2.2)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
       typescript:
         specifier: catalog:default
         version: 5.8.3
@@ -2098,7 +2098,7 @@ importers:
         version: 2.2.0
       tsup:
         specifier: 8.3.0
-        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
+        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(supports-color@9.2.2)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
       typescript:
         specifier: catalog:default
         version: 5.8.3
@@ -2828,6 +2828,338 @@ importers:
       unbuild:
         specifier: ^3.2.0
         version: 3.3.1(typescript@5.8.3)(vue-tsc@2.0.29(typescript@5.8.3))
+
+  packages/verglas:
+    dependencies:
+      '@cloudflare/kv-asset-handler':
+        specifier: workspace:*
+        version: link:../kv-asset-handler
+      '@cloudflare/unenv-preset':
+        specifier: workspace:*
+        version: link:../unenv-preset
+      blake3-wasm:
+        specifier: 2.1.5
+        version: 2.1.5
+      esbuild:
+        specifier: catalog:default
+        version: 0.28.1
+      miniflare:
+        specifier: workspace:*
+        version: link:../miniflare
+      path-to-regexp:
+        specifier: 6.3.0
+        version: 6.3.0
+      unenv:
+        specifier: 2.0.0-rc.24
+        version: 2.0.0-rc.24
+      workerd:
+        specifier: catalog:default
+        version: 1.20260827.1
+    devDependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.721.0
+        version: 3.721.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.721.0
+        version: 3.721.0
+      '@bomb.sh/tab':
+        specifier: ^0.0.12
+        version: 0.0.12(cac@6.7.14)(citty@0.1.6)
+      '@cloudflare/autoconfig':
+        specifier: workspace:*
+        version: link:../autoconfig
+      '@cloudflare/build-output-utils':
+        specifier: workspace:*
+        version: link:../build-output-utils
+      '@cloudflare/cli-shared-helpers':
+        specifier: workspace:*
+        version: link:../cli
+      '@cloudflare/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cloudflare/containers-shared':
+        specifier: workspace:*
+        version: link:../containers-shared
+      '@cloudflare/deploy-helpers':
+        specifier: workspace:*
+        version: link:../deploy-helpers
+      '@cloudflare/pages-functions':
+        specifier: workspace:*
+        version: link:../pages-functions
+      '@cloudflare/pages-shared':
+        specifier: workspace:^
+        version: link:../pages-shared
+      '@cloudflare/remote-bindings':
+        specifier: workspace:*
+        version: link:../remote-bindings
+      '@cloudflare/runtime-types':
+        specifier: workspace:*
+        version: link:../runtime-types
+      '@cloudflare/shared-ast-primitives':
+        specifier: workspace:*
+        version: link:../shared-ast-primitives
+      '@cloudflare/types':
+        specifier: 6.18.4
+        version: 6.18.4(react@19.2.4)
+      '@cloudflare/workers-auth':
+        specifier: workspace:*
+        version: link:../workers-auth
+      '@cloudflare/workers-shared':
+        specifier: workspace:*
+        version: link:../workers-shared
+      '@cloudflare/workers-tsconfig':
+        specifier: workspace:*
+        version: link:../workers-tsconfig
+      '@cloudflare/workers-types':
+        specifier: catalog:default
+        version: 5.20260827.1
+      '@cloudflare/workers-utils':
+        specifier: workspace:*
+        version: link:../workers-utils
+      '@cloudflare/workflows-shared':
+        specifier: workspace:*
+        version: link:../workflows-shared
+      '@cspotcode/source-map-support':
+        specifier: 0.8.1
+        version: 0.8.1
+      '@netlify/build-info':
+        specifier: ^10.5.1
+        version: 10.5.1(patch_hash=33ea78efb143b613c74982678a25159c8700b1677e6a009776a6c8b690c87045)
+      '@sentry/node':
+        specifier: ^7.86.0
+        version: 7.87.0(supports-color@9.2.2)
+      '@sentry/types':
+        specifier: ^7.86.0
+        version: 7.87.0
+      '@sentry/utils':
+        specifier: ^7.86.0
+        version: 7.87.0
+      '@types/command-exists':
+        specifier: ^1.2.0
+        version: 1.2.0
+      '@types/esprima':
+        specifier: ^4.0.3
+        version: 4.0.3
+      '@types/glob-to-regexp':
+        specifier: ^0.4.1
+        version: 0.4.1
+      '@types/javascript-time-ago':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@types/mime':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@types/minimatch':
+        specifier: ^5.1.2
+        version: 5.1.2
+      '@types/node':
+        specifier: 22.15.17
+        version: 22.15.17
+      '@types/node-forge':
+        specifier: ^1.3.11
+        version: 1.3.11
+      '@types/prompts':
+        specifier: ^2.0.14
+        version: 2.0.14
+      '@types/resolve':
+        specifier: ^1.20.6
+        version: 1.20.6
+      '@types/shell-quote':
+        specifier: ^1.7.2
+        version: 1.7.2
+      '@types/supports-color':
+        specifier: ^8.1.1
+        version: 8.1.1
+      '@types/ws':
+        specifier: ^8.5.7
+        version: 8.5.13
+      '@types/yargs':
+        specifier: ^17.0.22
+        version: 17.0.24
+      '@vitest/ui':
+        specifier: catalog:default
+        version: 4.1.0(vitest@4.1.0)
+      '@webcontainer/env':
+        specifier: ^1.1.0
+        version: 1.1.0
+      am-i-vibing:
+        specifier: ^0.5.0
+        version: 0.5.0
+      capnweb:
+        specifier: catalog:default
+        version: 0.5.0
+      chalk:
+        specifier: catalog:default
+        version: 5.3.0
+      chokidar:
+        specifier: ^4.0.1
+        version: 4.0.3
+      ci-info:
+        specifier: catalog:default
+        version: 4.4.0
+      cli-table3:
+        specifier: ^0.6.3
+        version: 0.6.3
+      cloudflare:
+        specifier: ^5.2.0
+        version: 5.2.0(encoding@0.1.13)
+      cmd-shim:
+        specifier: ^4.1.0
+        version: 4.1.0
+      command-exists:
+        specifier: catalog:default
+        version: 1.2.9
+      concurrently:
+        specifier: ^8.2.2
+        version: 8.2.2
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+      devtools-protocol:
+        specifier: ^0.0.1182435
+        version: 0.0.1182435
+      dotenv:
+        specifier: catalog:default
+        version: 16.3.1
+      dotenv-expand:
+        specifier: ^12.0.2
+        version: 12.0.2
+      empathic:
+        specifier: ^2.0.0
+        version: 2.0.1
+      esprima:
+        specifier: 4.0.1
+        version: 4.0.1
+      execa:
+        specifier: ^6.1.0
+        version: 6.1.0
+      get-port:
+        specifier: ^7.0.0
+        version: 7.1.0
+      glob-to-regexp:
+        specifier: ^0.4.1
+        version: 0.4.1
+      https-proxy-agent:
+        specifier: 7.0.2
+        version: 7.0.2(supports-color@9.2.2)
+      itty-time:
+        specifier: ^1.0.6
+        version: 1.0.6
+      javascript-time-ago:
+        specifier: ^2.5.4
+        version: 2.5.7
+      jsonc-parser:
+        specifier: catalog:default
+        version: 3.2.0
+      md5-file:
+        specifier: 5.0.0
+        version: 5.0.0
+      mime:
+        specifier: ^3.0.0
+        version: 3.0.0
+      minimatch:
+        specifier: ^5.1.0
+        version: 5.1.6
+      mock-socket:
+        specifier: ^9.3.1
+        version: 9.3.1
+      msw:
+        specifier: catalog:default
+        version: 2.14.6(@types/node@22.15.17)(typescript@5.8.3)
+      node-forge:
+        specifier: ^1.3.2
+        version: 1.3.3
+      open:
+        specifier: catalog:default
+        version: 11.0.0
+      p-queue:
+        specifier: ^9.0.0
+        version: 9.0.0
+      patch-console:
+        specifier: ^1.0.0
+        version: 1.0.0
+      pretty-bytes:
+        specifier: ^6.0.0
+        version: 6.1.1
+      prompts:
+        specifier: ^2.4.2
+        version: 2.4.2
+      qr:
+        specifier: ^0.6.0
+        version: 0.6.0
+      recast:
+        specifier: 0.23.11
+        version: 0.23.11
+      resolve:
+        specifier: ^1.22.8
+        version: 1.22.8
+      rosie-skills:
+        specifier: ^0.8.1
+        version: 0.8.1
+      semiver:
+        specifier: ^1.1.0
+        version: 1.1.0
+      shell-quote:
+        specifier: ^1.8.1
+        version: 1.8.3
+      signal-exit:
+        specifier: catalog:default
+        version: 4.1.0
+      smol-toml:
+        specifier: catalog:default
+        version: 1.5.2
+      supports-color:
+        specifier: ^9.2.2
+        version: 9.2.2
+      timeago.js:
+        specifier: 4.0.2
+        version: 4.0.2
+      tree-kill:
+        specifier: catalog:default
+        version: 1.2.2
+      ts-dedent:
+        specifier: ^2.2.0
+        version: 2.2.0
+      ts-json-schema-generator:
+        specifier: ^1.5.0
+        version: 1.5.0
+      tsdown:
+        specifier: 0.16.3
+        version: 0.16.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(ms@2.1.3)(synckit@0.11.12)(typescript@5.8.3)
+      tsup:
+        specifier: 8.3.0
+        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(supports-color@9.2.2)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
+      typescript:
+        specifier: catalog:default
+        version: 5.8.3
+      undici:
+        specifier: catalog:default
+        version: 7.29.0
+      vitest:
+        specifier: catalog:default
+        version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.15.17)(@vitest/ui@4.1.0)(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0))
+      vitest-websocket-mock:
+        specifier: ^0.4.0
+        version: 0.4.0(vitest@4.1.0)
+      ws:
+        specifier: catalog:default
+        version: 8.21.0
+      xxhash-wasm:
+        specifier: ^1.0.1
+        version: 1.0.1
+      yaml:
+        specifier: ^2.8.1
+        version: 2.9.0
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
+      zod:
+        specifier: catalog:default
+        version: 4.4.3
+    optionalDependencies:
+      fsevents:
+        specifier: 2.3.3
+        version: 2.3.3
 
   packages/vite-plugin-cloudflare:
     dependencies:
@@ -4223,7 +4555,7 @@ importers:
         version: 2.2.0
       tsup:
         specifier: 8.3.0
-        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
+        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(supports-color@9.2.2)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
       typescript:
         specifier: catalog:default
         version: 5.8.3
@@ -4486,7 +4818,7 @@ importers:
         version: 0.15.9(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(typescript@5.8.3)
       tsup:
         specifier: 8.3.0
-        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
+        version: 8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(supports-color@9.2.2)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0)
       typescript:
         specifier: catalog:default
         version: 5.8.3
@@ -5784,11 +6116,6 @@ packages:
     peerDependencies:
       react: ^15.0.0-0 || ^16.0.0-0 || ^17.0.0-0
 
-  '@cloudflare/intl-types@1.5.1':
-    resolution: {integrity: sha512-zCHVZ9xtvRxDjiqxgG7GPeaS2kpshQsq8dDrZl+c8ppuerrzBreW7hHVw3orllAOe0HLjLCKYWVj47W4O6U8lg==}
-    peerDependencies:
-      react: ^15.0.0-0 || ^16.0.0-0 || ^17.0.0-0
-
   '@cloudflare/intl-types@1.5.7':
     resolution: {integrity: sha512-5p+NqAoM3rOMsZsAS6RMWvClhuxWA3YqRkfIxkTcc6uYNsays90GuyzdXmN/v+T7UiSkmzRa7Atu75tD/245MQ==}
     peerDependencies:
@@ -5860,11 +6187,6 @@ packages:
 
   '@cloudflare/types@6.18.4':
     resolution: {integrity: sha512-Cgf6xjaHhQmf/MnSJ8zGat661oWmUI45qD/ClHf9uc++B5gh5128s0kuqaFed243PDhGgjdhQfk/ZGBjz+gf+w==}
-    peerDependencies:
-      react: ^15.0.0-0 || ^16.0.0-0 || ^17.0.0-0
-
-  '@cloudflare/types@6.23.6':
-    resolution: {integrity: sha512-4JbJv5cbtGeo7Vpg2Sx3LXAhkvDJeJV/9FLFm2u3MkyxXb9SXdjxoanO5bOripQThTrzB1a8Ctw/ghweSA91Cw==}
     peerDependencies:
       react: ^15.0.0-0 || ^16.0.0-0 || ^17.0.0-0
 
@@ -10009,9 +10331,6 @@ packages:
   '@types/json-diff@1.0.3':
     resolution: {integrity: sha512-Qvxm8fpRMv/1zZR3sQWImeRK2mBYJji20xF51Fq9Gt//Ed18u0x6/FNLogLS1xhfUWTEmDyqveJqn95ltB6Kvw==}
 
-  '@types/json-schema@7.0.13':
-    resolution: {integrity: sha512-RbSSoHliUbnXj3ny0CNFOoxrIDV6SUGyStHsvDqosw6CkdPV8TtWGlfecuK4ToyMEAql6pzNxgCFKanovUzlgQ==}
-
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -11884,9 +12203,6 @@ packages:
   es-errors@1.3.0:
     resolution: {integrity: sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==}
     engines: {node: '>= 0.4'}
-
-  es-module-lexer@2.0.0:
-    resolution: {integrity: sha512-5POEcUuZybH7IdmGsD8wlf0AI55wMecM9rVBTI/qEAy2c1kTOm3DjFYjrBdI2K3BaJjJYfYFeRtM0t9ssnRuxw==}
 
   es-module-lexer@2.3.1:
     resolution: {integrity: sha512-shc1dbU90Yl/xq1QrC7QRtfcwURZuVRfPhZbDoldJ1cn1gzDvBaBWlv0eFolj5+0znnPJz5TXLxsN77X/12KTA==}
@@ -16867,20 +17183,20 @@ snapshots:
   '@aws-crypto/crc32@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.714.0
+      '@aws-sdk/types': 3.974.2
       tslib: 2.8.1
 
   '@aws-crypto/crc32c@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.714.0
+      '@aws-sdk/types': 3.974.2
       tslib: 2.8.1
 
   '@aws-crypto/sha1-browser@5.2.0':
     dependencies:
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.714.0
+      '@aws-sdk/types': 3.974.2
       '@aws-sdk/util-locate-window': 3.693.0
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
@@ -16890,7 +17206,7 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.714.0
+      '@aws-sdk/types': 3.974.2
       '@aws-sdk/util-locate-window': 3.693.0
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
@@ -16907,7 +17223,7 @@ snapshots:
 
   '@aws-crypto/util@5.2.0':
     dependencies:
-      '@aws-sdk/types': 3.714.0
+      '@aws-sdk/types': 3.974.2
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
 
@@ -16924,7 +17240,7 @@ snapshots:
       '@aws-sdk/types': 3.974.2
       '@smithy/core': 3.31.1
       '@smithy/fetch-http-handler': 5.6.13
-      '@smithy/node-http-handler': 4.7.3
+      '@smithy/node-http-handler': 4.9.13
       '@smithy/types': 4.16.1
       tslib: 2.8.1
 
@@ -17898,7 +18214,7 @@ snapshots:
 
   '@base-ui/utils@0.2.4(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       '@floating-ui/utils': 0.2.10
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
@@ -17909,7 +18225,7 @@ snapshots:
 
   '@base-ui/utils@0.2.6(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       '@floating-ui/utils': 0.2.11
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
@@ -18228,7 +18544,7 @@ snapshots:
     dependencies:
       '@cloudflare/style-const': 5.7.3(react@18.3.1)
       '@cloudflare/style-container': 7.12.2(@cloudflare/style-const@5.7.3(react@18.3.1))(react@18.3.1)
-      '@cloudflare/types': 6.23.6(react@18.3.1)
+      '@cloudflare/types': 6.29.1(react@18.3.1)
       fela: 11.7.0
       polished: 4.2.2
       prop-types: 15.8.1
@@ -18292,7 +18608,7 @@ snapshots:
       '@cloudflare/style-const': 5.7.3(react@18.3.1)
       '@cloudflare/style-container': 7.12.2(@cloudflare/style-const@5.7.3(react@18.3.1))(react@18.3.1)
       '@cloudflare/style-provider': 3.1.1(@cloudflare/style-const@5.7.3(react@18.3.1))(@cloudflare/style-container@7.12.2(@cloudflare/style-const@5.7.3(react@18.3.1))(react@18.3.1))(react@18.3.1)
-      '@cloudflare/types': 6.23.6(react@18.3.1)
+      '@cloudflare/types': 6.29.1(react@18.3.1)
       '@cloudflare/util-hooks': 1.3.1(react@18.3.1)
       downshift: 6.1.12(react@18.3.1)
       match-sorter: 6.3.1
@@ -18316,7 +18632,7 @@ snapshots:
   '@cloudflare/component-textarea@4.1.2(@cloudflare/style-container@7.12.2(@cloudflare/style-const@5.7.3(react@18.3.1))(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@cloudflare/style-container': 7.12.2(@cloudflare/style-const@5.7.3(react@18.3.1))(react@18.3.1)
-      '@cloudflare/types': 6.23.6(react@18.3.1)
+      '@cloudflare/types': 6.29.1(react@18.3.1)
       prop-types: 15.8.1
       react: 18.3.1
       react-required-if: 1.0.3
@@ -18335,7 +18651,7 @@ snapshots:
       '@cloudflare/intl-react': 1.12.5(react@18.3.1)(regenerator-runtime@0.14.1)
       '@cloudflare/style-const': 5.7.3(react@18.3.1)
       '@cloudflare/style-container': 7.12.2(@cloudflare/style-const@5.7.3(react@18.3.1))(react@18.3.1)
-      '@cloudflare/types': 6.23.6(react@18.3.1)
+      '@cloudflare/types': 6.29.1(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - regenerator-runtime
@@ -18370,13 +18686,13 @@ snapshots:
     dependencies:
       '@cloudflare/style-const': 5.7.3(react@18.3.1)
       '@cloudflare/style-container': 7.12.2(@cloudflare/style-const@5.7.3(react@18.3.1))(react@18.3.1)
-      '@cloudflare/types': 6.23.6(react@18.3.1)
+      '@cloudflare/types': 6.29.1(react@18.3.1)
       react: 18.3.1
       styled-system: 5.1.5
 
   '@cloudflare/intl-core@1.15.0(react@18.3.1)(regenerator-runtime@0.14.1)':
     dependencies:
-      '@cloudflare/intl-types': 1.5.1(react@18.3.1)
+      '@cloudflare/intl-types': 1.5.7(react@18.3.1)
       '@cloudflare/util-markdown': 1.2.15
       '@types/lodash': 4.17.23
       '@types/node-polyglot': 2.4.2
@@ -18389,7 +18705,7 @@ snapshots:
   '@cloudflare/intl-react@1.12.5(react@18.3.1)(regenerator-runtime@0.14.1)':
     dependencies:
       '@cloudflare/intl-core': 1.15.0(react@18.3.1)(regenerator-runtime@0.14.1)
-      '@cloudflare/types': 6.23.6(react@18.3.1)
+      '@cloudflare/types': 6.29.1(react@18.3.1)
       '@cloudflare/util-markdown': 1.2.15
       dompurify: 2.5.8
       lodash: 4.17.23
@@ -18397,13 +18713,9 @@ snapshots:
     transitivePeerDependencies:
       - regenerator-runtime
 
-  '@cloudflare/intl-types@1.5.1(react@18.3.1)':
+  '@cloudflare/intl-types@1.5.7(react@18.3.1)':
     dependencies:
       react: 18.3.1
-
-  '@cloudflare/intl-types@1.5.1(react@19.2.4)':
-    dependencies:
-      react: 19.2.4
 
   '@cloudflare/intl-types@1.5.7(react@19.2.4)':
     dependencies:
@@ -18458,7 +18770,7 @@ snapshots:
 
   '@cloudflare/style-const@5.7.3(react@18.3.1)':
     dependencies:
-      '@cloudflare/types': 6.23.6(react@18.3.1)
+      '@cloudflare/types': 6.29.1(react@18.3.1)
       polished: 4.2.2
       react: 18.3.1
 
@@ -18471,7 +18783,7 @@ snapshots:
   '@cloudflare/style-container@7.12.2(@cloudflare/style-const@5.7.3(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@cloudflare/style-const': 5.7.3(react@18.3.1)
-      '@cloudflare/types': 6.23.6(react@18.3.1)
+      '@cloudflare/types': 6.29.1(react@18.3.1)
       fela: 11.7.0
       fela-tools: 11.7.0(fela@11.7.0)
       lodash: 4.17.23
@@ -18483,7 +18795,7 @@ snapshots:
   '@cloudflare/style-container@7.12.2(@cloudflare/style-const@6.1.3(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@cloudflare/style-const': 6.1.3(react@19.2.4)
-      '@cloudflare/types': 6.23.6(react@19.2.4)
+      '@cloudflare/types': 6.29.1(react@19.2.4)
       fela: 11.7.0
       fela-tools: 11.7.0(fela@11.7.0)
       lodash: 4.17.23
@@ -18513,21 +18825,15 @@ snapshots:
 
   '@cloudflare/types@6.18.4(react@19.2.4)':
     dependencies:
-      '@cloudflare/intl-types': 1.5.1(react@19.2.4)
-      '@cloudflare/util-en-garde': 8.0.10
+      '@cloudflare/intl-types': 1.5.7(react@19.2.4)
+      '@cloudflare/util-en-garde': 8.0.15
       react: 19.2.4
 
-  '@cloudflare/types@6.23.6(react@18.3.1)':
+  '@cloudflare/types@6.29.1(react@18.3.1)':
     dependencies:
-      '@cloudflare/intl-types': 1.5.1(react@18.3.1)
-      '@cloudflare/util-en-garde': 8.0.10
+      '@cloudflare/intl-types': 1.5.7(react@18.3.1)
+      '@cloudflare/util-en-garde': 8.0.15
       react: 18.3.1
-
-  '@cloudflare/types@6.23.6(react@19.2.4)':
-    dependencies:
-      '@cloudflare/intl-types': 1.5.1(react@19.2.4)
-      '@cloudflare/util-en-garde': 8.0.10
-      react: 19.2.4
 
   '@cloudflare/types@6.29.1(react@19.2.4)':
     dependencies:
@@ -19894,7 +20200,7 @@ snapshots:
 
   '@manypkg/find-root@1.1.0':
     dependencies:
-      '@babel/runtime': 7.22.5
+      '@babel/runtime': 7.29.7
       '@types/node': 22.15.17
       find-up: 4.1.0
       fs-extra: 8.1.0
@@ -20093,8 +20399,8 @@ snapshots:
       find-up: 7.0.0
       minimatch: 10.2.5
       read-pkg: 9.0.1
-      semver: 7.7.3
-      yaml: 2.8.1
+      semver: 7.8.5
+      yaml: 2.9.0
       yargs: 17.7.2
 
   '@noble/ciphers@2.1.1': {}
@@ -20676,36 +20982,36 @@ snapshots:
 
   '@radix-ui/number@1.0.1':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
 
   '@radix-ui/primitive@1.0.1':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
 
   '@radix-ui/react-compose-refs@1.0.1(@types/react@18.3.3)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       react: 18.3.1
     optionalDependencies:
       '@types/react': 18.3.3
 
   '@radix-ui/react-context@1.0.1(@types/react@18.3.3)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       react: 18.3.1
     optionalDependencies:
       '@types/react': 18.3.3
 
   '@radix-ui/react-direction@1.0.1(@types/react@18.3.3)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       react: 18.3.1
     optionalDependencies:
       '@types/react': 18.3.3
 
   '@radix-ui/react-presence@1.0.1(@types/react-dom@18.2.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       '@radix-ui/react-compose-refs': 1.0.1(@types/react@18.3.3)(react@18.3.1)
       '@radix-ui/react-use-layout-effect': 1.0.1(@types/react@18.3.3)(react@18.3.1)
       react: 18.3.1
@@ -20716,7 +21022,7 @@ snapshots:
 
   '@radix-ui/react-primitive@1.0.3(@types/react-dom@18.2.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       '@radix-ui/react-slot': 1.0.2(@types/react@18.3.3)(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -20726,7 +21032,7 @@ snapshots:
 
   '@radix-ui/react-scroll-area@1.0.4(@types/react-dom@18.2.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       '@radix-ui/number': 1.0.1
       '@radix-ui/primitive': 1.0.1
       '@radix-ui/react-compose-refs': 1.0.1(@types/react@18.3.3)(react@18.3.1)
@@ -20744,7 +21050,7 @@ snapshots:
 
   '@radix-ui/react-slot@1.0.2(@types/react@18.3.3)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       '@radix-ui/react-compose-refs': 1.0.1(@types/react@18.3.3)(react@18.3.1)
       react: 18.3.1
     optionalDependencies:
@@ -20752,14 +21058,14 @@ snapshots:
 
   '@radix-ui/react-use-callback-ref@1.0.1(@types/react@18.3.3)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       react: 18.3.1
     optionalDependencies:
       '@types/react': 18.3.3
 
   '@radix-ui/react-use-layout-effect@1.0.1(@types/react@18.3.3)(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       react: 18.3.1
     optionalDependencies:
       '@types/react': 18.3.3
@@ -22045,7 +22351,7 @@ snapshots:
       '@babel/types': 7.29.0
       ansis: 4.3.1
       babel-dead-code-elimination: 1.0.12
-      diff: 8.0.3
+      diff: 8.0.4
       pathe: 2.0.3
       tinyglobby: 0.2.17
     transitivePeerDependencies:
@@ -22191,8 +22497,6 @@ snapshots:
   '@types/jsesc@2.5.1': {}
 
   '@types/json-diff@1.0.3': {}
-
-  '@types/json-schema@7.0.13': {}
 
   '@types/json-schema@7.0.15': {}
 
@@ -22574,15 +22878,6 @@ snapshots:
     optionalDependencies:
       msw: 2.14.6(@types/node@22.15.17)(typescript@5.8.3)
       vite: 8.1.5(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0)
-
-  '@vitest/mocker@4.1.0(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.23.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0))':
-    dependencies:
-      '@vitest/spy': 4.1.0
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      msw: 2.14.6(@types/node@22.15.17)(typescript@5.8.3)
-      vite: 8.2.0(@types/node@22.15.17)(esbuild@0.23.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0)
 
   '@vitest/mocker@4.1.0(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@3.12.10)(yaml@2.9.0))':
     dependencies:
@@ -23461,7 +23756,7 @@ snapshots:
   cliui@9.0.1:
     dependencies:
       string-width: 7.2.0
-      strip-ansi: 7.1.0
+      strip-ansi: 7.2.0
       wrap-ansi: 9.0.0
 
   clone@2.1.2: {}
@@ -23968,7 +24263,7 @@ snapshots:
 
   downshift@6.1.12(react@18.3.1):
     dependencies:
-      '@babel/runtime': 7.22.5
+      '@babel/runtime': 7.29.7
       compute-scroll-into-view: 1.0.20
       prop-types: 15.8.1
       react: 18.3.1
@@ -24147,8 +24442,6 @@ snapshots:
   es-define-property@1.0.1: {}
 
   es-errors@1.3.0: {}
-
-  es-module-lexer@2.0.0: {}
 
   es-module-lexer@2.3.1: {}
 
@@ -26008,7 +26301,7 @@ snapshots:
 
   match-sorter@6.3.1:
     dependencies:
-      '@babel/runtime': 7.22.5
+      '@babel/runtime': 7.29.7
       remove-accents: 0.4.2
 
   math-intrinsics@1.1.0: {}
@@ -28675,7 +28968,7 @@ snapshots:
 
   ts-json-schema-generator@1.5.0:
     dependencies:
-      '@types/json-schema': 7.0.13
+      '@types/json-schema': 7.0.15
       commander: 11.1.0
       glob: 8.1.0
       json5: 2.2.3
@@ -28809,7 +29102,7 @@ snapshots:
       - tsx
       - yaml
 
-  tsup@8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(tsx@3.12.10)(typescript@5.8.3)(yaml@2.9.0):
+  tsup@8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(supports-color@9.2.2)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0):
     dependencies:
       bundle-require: 5.1.0(esbuild@0.23.1)
       cac: 6.7.14
@@ -28820,7 +29113,7 @@ snapshots:
       execa: 5.1.1
       joycon: 3.1.1
       picocolors: 1.1.1
-      postcss-load-config: 6.0.1(jiti@2.6.1)(postcss@8.5.23)(tsx@3.12.10)(yaml@2.9.0)
+      postcss-load-config: 6.0.1(jiti@2.6.1)(postcss@8.5.23)(tsx@4.21.0)(yaml@2.9.0)
       resolve-from: 5.0.0
       rollup: 4.57.1
       source-map: 0.8.0-beta.0
@@ -28837,7 +29130,7 @@ snapshots:
       - tsx
       - yaml
 
-  tsup@8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(tsx@4.21.0)(typescript@5.8.3)(yaml@2.9.0):
+  tsup@8.3.0(@microsoft/api-extractor@7.52.8(@types/node@22.15.17))(jiti@2.6.1)(postcss@8.5.23)(tsx@3.12.10)(typescript@5.8.3)(yaml@2.9.0):
     dependencies:
       bundle-require: 5.1.0(esbuild@0.23.1)
       cac: 6.7.14
@@ -28848,7 +29141,7 @@ snapshots:
       execa: 5.1.1
       joycon: 3.1.1
       picocolors: 1.1.1
-      postcss-load-config: 6.0.1(jiti@2.6.1)(postcss@8.5.23)(tsx@4.21.0)(yaml@2.9.0)
+      postcss-load-config: 6.0.1(jiti@2.6.1)(postcss@8.5.23)(tsx@3.12.10)(yaml@2.9.0)
       resolve-from: 5.0.0
       rollup: 4.57.1
       source-map: 0.8.0-beta.0
@@ -29419,21 +29712,6 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.9.0
 
-  vite@8.2.0(@types/node@22.15.17)(esbuild@0.23.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0):
-    dependencies:
-      lightningcss: 1.33.0
-      picomatch: 4.0.5
-      postcss: 8.5.23
-      rolldown: 1.2.3
-      tinyglobby: 0.2.17
-    optionalDependencies:
-      '@types/node': 22.15.17
-      esbuild: 0.23.1
-      fsevents: 2.3.3
-      jiti: 2.6.1
-      tsx: 4.21.0
-      yaml: 2.9.0
-
   vite@8.2.0(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@3.12.10)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.33.0
@@ -29483,7 +29761,7 @@ snapshots:
     dependencies:
       '@vitest/utils': 2.1.8
       mock-socket: 9.3.1
-      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.15.17)(@vitest/ui@4.1.0)(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))
+      vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.15.17)(@vitest/ui@4.1.0)(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0))
 
   vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.15.17)(@vitest/ui@4.1.0)(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.1.5(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0)):
     dependencies:
@@ -29494,7 +29772,7 @@ snapshots:
       '@vitest/snapshot': 4.1.0
       '@vitest/spy': 4.1.0
       '@vitest/utils': 4.1.0
-      es-module-lexer: 2.0.0
+      es-module-lexer: 2.3.1
       expect-type: 1.3.0
       magic-string: 0.30.21
       obug: 2.1.4
@@ -29514,35 +29792,6 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.15.17)(@vitest/ui@4.1.0)(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.23.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0)):
-    dependencies:
-      '@vitest/expect': 4.1.0
-      '@vitest/mocker': 4.1.0(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.23.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0))
-      '@vitest/pretty-format': 4.1.0
-      '@vitest/runner': 4.1.0
-      '@vitest/snapshot': 4.1.0
-      '@vitest/spy': 4.1.0
-      '@vitest/utils': 4.1.0
-      es-module-lexer: 2.0.0
-      expect-type: 1.3.0
-      magic-string: 0.30.21
-      obug: 2.1.4
-      pathe: 2.0.3
-      picomatch: 4.0.5
-      std-env: 4.0.0
-      tinybench: 2.9.0
-      tinyexec: 1.2.4
-      tinyglobby: 0.2.17
-      tinyrainbow: 3.0.3
-      vite: 8.2.0(@types/node@22.15.17)(esbuild@0.23.1)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.9.0)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.1
-      '@types/node': 22.15.17
-      '@vitest/ui': 4.1.0(vitest@4.1.0)
-    transitivePeerDependencies:
-      - msw
-
   vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.15.17)(@vitest/ui@4.1.0)(msw@2.14.6(@types/node@22.15.17)(typescript@5.8.3))(vite@8.2.0(@types/node@22.15.17)(esbuild@0.28.1)(jiti@2.6.1)(tsx@3.12.10)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.0
@@ -29552,7 +29801,7 @@ snapshots:
       '@vitest/snapshot': 4.1.0
       '@vitest/spy': 4.1.0
       '@vitest/utils': 4.1.0
-      es-module-lexer: 2.0.0
+      es-module-lexer: 2.3.1
       expect-type: 1.3.0
       magic-string: 0.30.21
       obug: 2.1.4
@@ -29581,7 +29830,7 @@ snapshots:
       '@vitest/snapshot': 4.1.0
       '@vitest/spy': 4.1.0
       '@vitest/utils': 4.1.0
-      es-module-lexer: 2.0.0
+      es-module-lexer: 2.3.1
       expect-type: 1.3.0
       magic-string: 0.30.21
       obug: 2.1.4
@@ -29610,7 +29859,7 @@ snapshots:
       '@vitest/snapshot': 4.1.0
       '@vitest/spy': 4.1.0
       '@vitest/utils': 4.1.0
-      es-module-lexer: 2.0.0
+      es-module-lexer: 2.3.1
       expect-type: 1.3.0
       magic-string: 0.30.21
       obug: 2.1.4
@@ -29639,7 +29888,7 @@ snapshots:
       '@vitest/snapshot': 4.1.0
       '@vitest/spy': 4.1.0
       '@vitest/utils': 4.1.0
-      es-module-lexer: 2.0.0
+      es-module-lexer: 2.3.1
       expect-type: 1.3.0
       magic-string: 0.30.21
       obug: 2.1.4

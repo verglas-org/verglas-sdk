@@ -155,13 +155,28 @@ const getCloudflareApiBaseUrlFromEnv = getEnvironmentVariableFactory({
 	deprecatedName: "CF_API_BASE_URL",
 });
 
+const getVerglasApiBaseUrlFromEnv = getEnvironmentVariableFactory({
+	variableName: "VERGLAS_API_BASE_URL",
+});
+
 /**
- * `CLOUDFLARE_API_BASE_URL` specifies the URL to the Cloudflare API.
+ * `VERGLAS_API_BASE_URL` overrides the API base URL used by Verglas-compatible
+ * clients. `CLOUDFLARE_API_BASE_URL` remains supported as an override for
+ * existing integrations.
+ */
+export const getVerglasApiBaseUrl = (complianceConfig: ComplianceConfig) =>
+	getVerglasApiBaseUrlFromEnv() ??
+	getCloudflareApiBaseUrlFromEnv() ??
+	"https://api.verglas.dev/client/v4";
+
+/**
+ * `CLOUDFLARE_API_BASE_URL` specifies a Cloudflare-compatible API URL.
  *
- * If this environment variable is not set, it will default to a URL computed from the
- * Cloudflare compliance region and the API environment.
+ * If this environment variable is not set, the compatibility alias uses the
+ * Cloudflare compliance-region default.
  */
 export const getCloudflareApiBaseUrl = (complianceConfig: ComplianceConfig) =>
+	getVerglasApiBaseUrlFromEnv() ??
 	getCloudflareApiBaseUrlFromEnv() ??
 	`https://api${getComplianceRegionSubdomain(complianceConfig)}${getStagingSubdomain()}.cloudflare.com/client/v4`;
 
