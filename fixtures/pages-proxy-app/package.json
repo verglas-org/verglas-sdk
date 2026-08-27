@@ -14,7 +14,7 @@
 	},
 	"devDependencies": {
 		"@cloudflare/workers-tsconfig": "workspace:*",
-		"miniflare": "workspace:*",
+		"miniflare": "5.20260826.0-alpha",
 		"typescript": "catalog:default",
 		"undici": "catalog:default",
 		"vitest": "catalog:default",

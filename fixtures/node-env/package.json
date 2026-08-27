@@ -17,7 +17,7 @@
 		"@types/node": "catalog:default",
 		"@types/react": "^18.3.3",
 		"@types/react-dom": "^18.2.0",
-		"miniflare": "workspace:*",
+		"miniflare": "5.20260826.0-alpha",
 		"typescript": "catalog:default",
 		"vitest": "catalog:default",
 		"wrangler": "workspace:*"

@@ -47,7 +47,7 @@
 		"chalk": "catalog:default",
 		"command-exists": "catalog:default",
 		"dotenv": "catalog:default",
-		"miniflare": "workspace:*",
+		"miniflare": "5.20260826.0-alpha",
 		"p-queue": "9.0.0",
 		"pretty-bytes": "6.1.1",
 		"undici": "catalog:default"

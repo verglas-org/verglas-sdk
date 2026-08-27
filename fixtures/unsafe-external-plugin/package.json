@@ -12,7 +12,7 @@
 		"@cloudflare/workers-tsconfig": "workspace:*",
 		"@cloudflare/workers-types": "catalog:default",
 		"esbuild": "catalog:default",
-		"miniflare": "workspace:*",
+		"miniflare": "5.20260826.0-alpha",
 		"tsx": "^3.12.8",
 		"zod": "catalog:default"
 	}

@@ -14,7 +14,7 @@
 		"@types/is-even": "^1.0.2",
 		"get-port": "^7.1.0",
 		"is-even": "^1.0.0",
-		"miniflare": "workspace:*",
+		"miniflare": "5.20260826.0-alpha",
 		"wrangler": "workspace:*"
 	}
 }
