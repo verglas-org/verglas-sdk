@@ -337,7 +337,7 @@ export async function fetchWorkerDefinitionFromDash(
 	addUserAgent(headers);
 
 	let response = await fetch(
-		`${getCloudflareApiBaseUrl(complianceConfig)}${resource}`,
+		`${getVerglasApiBaseUrl(complianceConfig)}${resource}`,
 		{
 			...bodyInit,
 			headers,

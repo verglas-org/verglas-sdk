@@ -58,7 +58,7 @@ export const oauthArgs = {
 
 export const loginCommand = createCommand({
 	metadata: {
-		description: "🔓 Login to Cloudflare",
+		description: "🔓 Login through the configured compatible OAuth provider",
 		owner: "Workers: Authoring and Testing",
 		status: "stable",
 		category: "Account",
@@ -179,7 +179,7 @@ export const loginCommand = createCommand({
 
 export const logoutCommand = createCommand({
 	metadata: {
-		description: "🚪 Logout from Cloudflare",
+		description: "🚪 Logout from the configured compatible OAuth provider",
 		owner: "Workers: Authoring and Testing",
 		status: "stable",
 		category: "Account",

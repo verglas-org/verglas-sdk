@@ -29,7 +29,7 @@ import type { Config } from "@cloudflare/workers-utils";
 
 export const deployCommand = createCommand({
 	metadata: {
-		description: "🆙 Deploy a Worker to Cloudflare",
+		description: "🆙 Deploy a Worker to Verglas",
 		owner: "Workers: Deploy and Config",
 		status: "stable",
 		category: "Compute & AI",

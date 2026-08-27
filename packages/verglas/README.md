@@ -74,3 +74,7 @@ Verglas uses `https://api.verglas.dev/client/v4` by default. Set
 `VERGLAS_API_BASE_URL` to target another Verglas-compatible API. The existing
 `CLOUDFLARE_API_BASE_URL` (and deprecated `CF_API_BASE_URL`) variables remain
 supported and take precedence when `VERGLAS_API_BASE_URL` is not set.
+
+Set `VERGLAS_API_TOKEN` and `VERGLAS_ACCOUNT_ID` for non-interactive use. The
+legacy `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` names remain accepted
+for compatibility.

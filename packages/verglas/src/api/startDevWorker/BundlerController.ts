@@ -503,7 +503,7 @@ export class BundlerController extends Controller {
 						logger.warn(
 							`Assets directory watcher encountered an error and has been disabled.\n` +
 								`Hot-reloading will not reflect changes to files in ${assetsDir}.\n` +
-								`Watcher error: ${err.message}`
+								`Watcher error: ${errnoError.message}`
 						);
 					}
 					void watcher.close();

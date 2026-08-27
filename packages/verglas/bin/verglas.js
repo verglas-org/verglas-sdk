@@ -13,6 +13,22 @@ if (
 	process.env.VERGLAS_API_BASE_URL = "https://api.verglas.dev/client/v4";
 }
 
+// The inherited auth/account resolver still consumes the Cloudflare-compatible
+// variable names internally. Expose native Verglas names without removing the
+// old names users may rely on when targeting another compatible endpoint.
+if (
+	process.env.VERGLAS_API_TOKEN !== undefined &&
+	process.env.CLOUDFLARE_API_TOKEN === undefined
+) {
+	process.env.CLOUDFLARE_API_TOKEN = process.env.VERGLAS_API_TOKEN;
+}
+if (
+	process.env.VERGLAS_ACCOUNT_ID !== undefined &&
+	process.env.CLOUDFLARE_ACCOUNT_ID === undefined
+) {
+	process.env.CLOUDFLARE_ACCOUNT_ID = process.env.VERGLAS_ACCOUNT_ID;
+}
+
 const MIN_NODE_VERSION = "22.0.0";
 let verglasProcess;
 

@@ -60,7 +60,7 @@ export type Tail = {
 
 export const deleteCommand = createCommand({
 	metadata: {
-		description: "🗑️ Delete a Worker from Cloudflare",
+		description: "🗑️ Delete a Worker from Verglas",
 		owner: "Workers: Authoring and Testing",
 		status: "stable",
 		category: "Compute & AI",
