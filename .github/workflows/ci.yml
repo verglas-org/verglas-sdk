@@ -20,6 +20,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build --filter verglas...
       - run: pnpm test
         working-directory: packages/worker-js
       - run: python3 -m unittest discover -s packages/worker-py/tests -v
@@ -27,5 +28,3 @@ jobs:
         working-directory: packages/verglas
       - run: pnpm vitest run tests/cfetch-utils.test.ts
         working-directory: packages/workers-utils
-      - run: pnpm run build
-        working-directory: packages/verglas
