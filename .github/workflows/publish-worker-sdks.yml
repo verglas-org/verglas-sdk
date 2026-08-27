@@ -8,8 +8,11 @@ permissions:
 
 jobs:
   javascript:
-    runs-on: [self-hosted, fly]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
@@ -17,19 +20,18 @@ jobs:
           version: 10.33.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
         working-directory: packages/worker-js
-      - run: pnpm publish --access public --no-git-checks
+      - run: npm install --global npm@11.19.1
+      - run: npm publish --access public
         working-directory: packages/worker-js
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   python:
-    runs-on: [self-hosted, fly]
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
