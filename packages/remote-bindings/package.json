@@ -36,7 +36,7 @@
 		"@cloudflare/workers-auth": "workspace:*",
 		"@cloudflare/workers-utils": "workspace:*",
 		"chalk": "catalog:default",
-		"miniflare": "workspace:*",
+		"miniflare": "5.20260826.0-alpha",
 		"undici": "catalog:default",
 		"ws": "catalog:default"
 	},

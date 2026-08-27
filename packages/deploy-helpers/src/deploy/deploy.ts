@@ -8,7 +8,6 @@ import {
 	APIError,
 	formatTime,
 	getDockerPath,
-	hasDurableObjectExports,
 	parseNonHyphenedUuid,
 	retryOnAPIFailure,
 	UserError,
@@ -25,11 +24,13 @@ import {
 import { getBindings } from "./helpers/binding-utils";
 import { printBundleSize } from "./helpers/bundle-reporter";
 import { confirmLatestDeploymentOverwrite } from "./helpers/confirm-latest-deployment-overwrite";
-import { createWorkerUploadForm } from "./helpers/create-worker-upload-form";
+import {
+	addVerglasComponentToWorkerUploadForm,
+	createWorkerUploadForm,
+} from "./helpers/create-worker-upload-form";
 import { deployWfpUserWorker } from "./helpers/deploy-wfp";
 import {
 	applyServiceAndEnvironmentTags,
-	tagsAreEqual,
 	warnOnErrorUpdatingServiceAndEnvironmentTags,
 } from "./helpers/environments";
 import { EXPORTS_RECONCILIATION_ERROR_CODE } from "./helpers/error-codes";
@@ -37,7 +38,6 @@ import { resolveExportsUploadPayload } from "./helpers/exports";
 import {
 	isExportsReconciliationErrorDetails,
 	renderExportsReconciliationError,
-	renderExportsReconciliationSuccess,
 } from "./helpers/exports-reconciliation";
 import { helpIfErrorIsSizeOrScriptStartup } from "./helpers/friendly-validator-errors";
 import { collectPackageDependencies } from "./helpers/package-dependencies";
@@ -79,7 +79,6 @@ import type {
 	CfWorkerInit,
 	ComplianceConfig,
 	Config,
-	ExportsReconciliationResult,
 	LegacyAssetPaths,
 } from "@cloudflare/workers-utils";
 import type { FormData } from "undici";
@@ -195,9 +194,6 @@ async function deployWorker(
 
 	const start = Date.now();
 	const workerName = scriptName;
-	const workerUrl = props.dispatchNamespace
-		? `/accounts/${accountId}/workers/dispatch/namespaces/${props.dispatchNamespace}/scripts/${scriptName}`
-		: `/accounts/${accountId}/workers/scripts/${scriptName}`;
 
 	const { format } = entry;
 	const { projectRoot } = entry;
@@ -376,21 +372,22 @@ async function deployWorker(
 	// * are uploading a worker that already exists
 	// * aren't a dispatch namespace deploy
 	// * aren't a service Worker
-	// * we don't have DO migrations or Durable Object `exports`.
-	//   Worker exports do not apply lifecycle changes, so they can use this path.
 	// * we aren't an fpw
 	// * not a container worker
 	const canUseNewVersionsDeploymentsApi =
-		workerExists &&
 		props.dispatchNamespace === undefined &&
 		format === "modules" &&
-		migrations === undefined &&
-		!hasDurableObjectExports(config.exports) &&
 		!config.first_party_worker &&
 		config.containers === undefined;
 
 	let workerBundle: FormData;
 	const dockerPath = getDockerPath();
+	if (!canUseNewVersionsDeploymentsApi) {
+		throw new UserError(
+			"Verglas deploy requires the immutable Workers Versions API. Dispatch namespace, service-worker, first-party, container, and unsupported resource deployments are not supported yet.",
+			{ telemetryMessage: "verglas deploy unsupported deployment shape" }
+		);
+	}
 
 	// lets fail earlier in the case where docker isn't installed
 	// and we have containers so that we don't get into a
@@ -484,12 +481,18 @@ async function deployWorker(
 				unsafe: config.unsafe,
 			}
 		);
+		if (canUseNewVersionsDeploymentsApi && buildResult.verglasComponent) {
+			addVerglasComponentToWorkerUploadForm(
+				workerBundle,
+				buildResult.verglasComponent
+			);
+		}
 
 		let bindingsPrinted = false;
 
 		// Upload the script so it has time to propagate.
 		try {
-			let result: {
+			let result!: {
 				id: string | null;
 				etag: string | null;
 				pipeline_hash: string | null;
@@ -556,59 +559,6 @@ async function deployWorker(
 					deployment_id: versionResult.id, // version id not deployment id but easier to adapt here
 					startup_time_ms: versionResult.startup_time_ms,
 				};
-			} else {
-				const uploadResult = await retryOnAPIFailure(
-					async () =>
-						fetchResult<{
-							id: string | null;
-							etag: string | null;
-							pipeline_hash: string | null;
-							mutable_pipeline_id: string | null;
-							deployment_id: string | null;
-							startup_time_ms: number;
-							exports_reconciliation?: ExportsReconciliationResult;
-						}>(
-							config,
-							workerUrl,
-							{
-								method: "PUT",
-								body: workerBundle,
-								headers: props.sendMetrics
-									? { metricsEnabled: "true" }
-									: undefined,
-							},
-							new URLSearchParams({
-								// pass excludeScript so the whole body of the
-								// script doesn't get included in the response
-								excludeScript: "true",
-								bindings_inherit: "strict",
-							})
-						),
-					logger
-				);
-				result = uploadResult;
-				if (uploadResult.exports_reconciliation) {
-					renderExportsReconciliationSuccess(
-						uploadResult.exports_reconciliation
-					);
-				}
-
-				// Update service and environment tags when using environments
-				const nextTags = applyServiceAndEnvironmentTags(config, tags);
-				if (!tagsAreEqual(tags, nextTags)) {
-					try {
-						await patchNonVersionedScriptSettings(
-							config,
-							accountId,
-							scriptName,
-							{
-								tags: nextTags,
-							}
-						);
-					} catch {
-						warnOnErrorUpdatingServiceAndEnvironmentTags();
-					}
-				}
 			}
 
 			if (result.startup_time_ms) {

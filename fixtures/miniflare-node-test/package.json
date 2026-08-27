@@ -13,7 +13,7 @@
 		"@cloudflare/workers-types": "catalog:default",
 		"@types/is-even": "^1.0.2",
 		"is-even": "^1.0.0",
-		"miniflare": "workspace:*",
+		"miniflare": "5.20260826.0-alpha",
 		"wrangler": "workspace:*"
 	}
 }

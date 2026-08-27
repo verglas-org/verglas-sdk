@@ -74,6 +74,13 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Python Worker SDK build and environment output
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+packages/worker-py/build/
+
 # Moved from ./templates for ignoring all locks in templates
 templates/**/*-lock.*
 templates/**/*.lock

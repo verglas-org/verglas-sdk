@@ -154,6 +154,8 @@ export type WorkerBuildResult = {
 	resolvedEntryPointPath: string;
 	bundleType: CfModuleType;
 	content: string;
+	/** A client-side compiled Verglas component, when targeting Verglas. */
+	verglasComponent?: Uint8Array;
 };
 
 export interface TriggerDeployment {

@@ -15,8 +15,10 @@ type VariableNames =
 	| "CLOUDFLARE_API_KEY"
 	/** Email address for API key authentication. Used with `CLOUDFLARE_API_KEY`. It is preferred to use `CLOUDFLARE_API_TOKEN`. */
 	| "CLOUDFLARE_EMAIL"
-	/** Custom API base URL. Defaults to https://api.cloudflare.com/client/v4 */
+	/** Legacy Cloudflare-compatible API base URL override. */
 	| "CLOUDFLARE_API_BASE_URL"
+	/** Custom Verglas API base URL. Defaults to https://api.verglas.dev/client/v4 in the Verglas CLI. */
+	| "VERGLAS_API_BASE_URL"
 	/** Set to "fedramp_high" for FedRAMP High compliance region. This will update the API/AUTH URLs used to make requests to Cloudflare. */
 	| "CLOUDFLARE_COMPLIANCE_REGION"
 	/** API token for R2 SQL service. */

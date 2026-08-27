@@ -1,0 +1,45 @@
+{
+	"name": "@verglas/worker-js",
+	"version": "0.1.0",
+	"private": false,
+	"description": "Builds JavaScript Durable Object Workers into Verglas WebAssembly components.",
+	"homepage": "https://github.com/verglas-org/verglas-sdk/tree/main/packages/worker-js#readme",
+	"license": "FSL-1.1-ALv2",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/verglas-org/verglas-sdk.git",
+		"directory": "packages/worker-js"
+	},
+	"bin": {
+		"verglas-worker-build": "./bin/build.mjs"
+	},
+	"files": [
+		"bin",
+		"src",
+		"wit",
+		"README.md",
+		"LICENSE"
+	],
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts",
+			"default": "./src/index.js"
+		},
+		"./build": "./bin/build.mjs",
+		"./assets": {
+			"types": "./src/assets.d.ts",
+			"default": "./src/assets.js"
+		},
+		"./cloudflare-workers": "./src/cloudflare-workers.js"
+	},
+	"scripts": {
+		"test": "node --test test/*.test.mjs",
+		"prepack": "npm test"
+	},
+	"dependencies": {
+		"@bytecodealliance/componentize-js": "0.22.0",
+		"@bytecodealliance/jco": "1.31.0",
+		"esbuild": "0.28.2"
+	}
+}
