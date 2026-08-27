@@ -22,14 +22,21 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build --filter verglas...
       - run: pnpm test
         working-directory: packages/worker-js
       - run: npm install --global npm@11.19.1
-      - run: npm publish --access public
+      - name: Publish JavaScript Worker SDK
+        run: npm publish --access public
         working-directory: packages/worker-js
         env:
           # Required only for the first publish. Once npm trusted publishing is
           # configured, remove the repository secret and npm uses OIDC.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish Verglas CLI
+        run: npm publish --access public
+        working-directory: packages/verglas
+        env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   python:
