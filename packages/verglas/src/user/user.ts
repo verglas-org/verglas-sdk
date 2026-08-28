@@ -457,18 +457,34 @@ export async function fetchAllAccounts(
 		);
 	const body = (await response.json()) as {
 		identity?: { email?: unknown };
-		organizations?: Array<{ id?: unknown; name?: unknown }>;
+		organizations?: Array<{
+			id?: unknown;
+			name?: unknown;
+			deployments?: Array<{ id?: unknown; name?: unknown }>;
+		}>;
 	};
 	if (typeof body.identity?.email === "string")
 		cachedEmail = body.identity.email;
-	const accounts = (body.organizations ?? []).flatMap((organization) =>
-		typeof organization.id === "string" && typeof organization.name === "string"
-			? [{ id: organization.id, name: organization.name }]
-			: []
-	);
+	const accounts = (body.organizations ?? []).flatMap((organization) => {
+		if (typeof organization.name !== "string") return [];
+		const organizationName = organization.name;
+		return (organization.deployments ?? []).flatMap((deployment) =>
+			typeof deployment.id === "string" && typeof deployment.name === "string"
+				? [
+						{
+							id: deployment.id,
+							name:
+								deployment.name === "default"
+									? organizationName
+									: `${organizationName} / ${deployment.name}`,
+						},
+					]
+				: []
+		);
+	});
 	if (accounts.length === 0 && options?.throwOnEmpty !== false)
 		throw new UserError(
-			"No Verglas organizations are available for this account.",
+			"No Verglas deployments are available for this account.",
 			{ telemetryMessage: "verglas account discovery empty" }
 		);
 	return accounts;

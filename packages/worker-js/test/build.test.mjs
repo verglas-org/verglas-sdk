@@ -92,6 +92,7 @@ test('build output is valid and records digest determinism', async (t) => {
       worker: { digest: first.componentDigest, component_dir: outputOne },
       durable_object: { digest: first.componentDigest, component_dir: outputOne },
     },
+    data_root: 'state',
   });
 
   const wit = spawnSync(fileURLToPath(jcoPath), ['wit', first.componentPath], { encoding: 'utf8' });

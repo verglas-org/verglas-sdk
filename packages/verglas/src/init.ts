@@ -73,7 +73,15 @@ export const init = createCommand({
 			...(yesFlag && isNpm(packageManager) ? ["-y"] : []), // --yes arg for npx
 			...(isNpm(packageManager) ? ["--"] : []),
 			...(args.fromDash ? ["--existing-script", args.fromDash] : []),
-			...(yesFlag ? ["--wrangler-defaults"] : []),
+			...(yesFlag && !args.fromDash
+				? [
+						"--type=hello-world",
+						"--lang=ts",
+						"--no-deploy",
+						"--no-git",
+						"--no-agents",
+					]
+				: []),
 		];
 		const replacementC3Command = `\`${packageManager.type} ${c3Arguments.join(
 			" "

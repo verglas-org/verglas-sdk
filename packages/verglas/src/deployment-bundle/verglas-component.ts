@@ -1,4 +1,6 @@
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -29,6 +31,22 @@ type Componentize = (options: {
 		"stdio" | "random" | "clocks" | "http" | "fetch-event"
 	>;
 }) => Promise<{ component: Uint8Array }>;
+
+function componentizeModuleUrl(): string {
+	const packageName = "@bytecodealliance/componentize-js";
+	const resolver = createRequire(path.join(getBasePath(), "package.json"));
+	for (const modulesDirectory of resolver.resolve.paths(packageName) ?? []) {
+		const candidate = path.join(
+			modulesDirectory,
+			"@bytecodealliance",
+			"componentize-js",
+			"src",
+			"componentize.js"
+		);
+		if (existsSync(candidate)) return pathToFileURL(candidate).href;
+	}
+	throw new Error(`Cannot resolve the installed ${packageName} runtime`);
+}
 
 /**
  * Fail closed for bindings that the Verglas control plane does not provision
@@ -115,21 +133,12 @@ export async function componentizeWorker(options: {
 		}
 		const bundledPath = path.join(workDir, "entry.bundle.js");
 		await writeFile(bundledPath, bundled.outputFiles[0].contents);
-		// The published CLI is CommonJS while ComponentizeJS is ESM-only. Import
-		// its file URL explicitly so Node does not attempt require() on the ESM
-		// package export.
-		const componentizeModule = (await import(
-			pathToFileURL(
-				path.join(
-					getBasePath(),
-					"node_modules",
-					"@bytecodealliance",
-					"componentize-js",
-					"src",
-					"componentize.js"
-				)
-			).href
-		)) as { componentize: Componentize };
+		// The published CLI is CommonJS while ComponentizeJS is ESM-only. Resolve
+		// its file URL through Node's package search paths so both nested and
+		// npm-hoisted installations work, then import the ESM entry explicitly.
+		const componentizeModule = (await import(componentizeModuleUrl())) as {
+			componentize: Componentize;
+		};
 		const result = await componentizeModule.componentize({
 			sourcePath: bundledPath,
 			witPath: workerAssetPath("world.wit"),
