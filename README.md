@@ -31,7 +31,7 @@ See [NOTICE](NOTICE), [LICENSE-MIT](LICENSE-MIT), and
 
 ## Worker SDKs
 
-- [`@verglas/worker-js`](packages/worker-js) builds JavaScript and TypeScript
+- [`@verglas-org/worker-js`](packages/worker-js) builds JavaScript and TypeScript
   Workers and Durable Objects into Verglas WebAssembly components.
 - [`verglas-worker`](packages/worker-py) provides the Python Worker runtime and
   component builder.

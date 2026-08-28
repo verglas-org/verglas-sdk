@@ -30,7 +30,7 @@ Unknown keys are errors. Migration entries accept `tag`, `new_classes`, and
 `new_sqlite_classes`; other migration kinds are errors. The build command is:
 
 ```sh
-npm install --save-dev @verglas/worker-js
+npm install --save-dev @verglas-org/worker-js
 npx verglas-worker-build ./my-worker --out ./build [--gateway <gateway.json>]
 ```
 

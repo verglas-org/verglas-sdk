@@ -14,13 +14,13 @@ export function workerAssetPath(name) {
 	};
 	const asset = assets[name];
 	if (asset === undefined)
-		throw new Error(`unknown @verglas/worker-js asset: ${name}`);
+		throw new Error(`unknown @verglas-org/worker-js asset: ${name}`);
 	return asset;
 }
 
 /** Returns an absolute path to a build tool installed with this package. */
 export function workerToolPath(name) {
 	if (name !== "jco")
-		throw new Error(`unknown @verglas/worker-js tool: ${name}`);
+		throw new Error(`unknown @verglas-org/worker-js tool: ${name}`);
 	return resolve(dirname(require.resolve("@bytecodealliance/jco")), "jco.js");
 }
