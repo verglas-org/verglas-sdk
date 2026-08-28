@@ -1,0 +1,21 @@
+# Mintlify is rooted at the repository until its monorepo path is configured.
+# Keep SDK packages, fixtures, and their global CSS out of the docs build.
+.changeset/
+.opencode/
+fixtures/
+packages/
+patches/
+tools/
+
+# Root-level workspace files are not documentation content.
+*.jsonc
+*.md
+*.mjs
+*.png
+*.toml
+*.ts
+*.yaml
+package.json
+pnpm-lock.yaml
+pnpm-workspace.yaml
+turbo.json
