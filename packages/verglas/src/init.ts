@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path, { dirname } from "node:path";
 import {
 	COMPLIANCE_REGION_CONFIG_UNKNOWN,
@@ -7,6 +7,7 @@ import {
 	UserError,
 } from "@cloudflare/workers-utils";
 import { execa } from "execa";
+import { version as verglasVersion } from "../package.json";
 import { fetchResult } from "./cfetch";
 import { fetchWorkerDefinitionFromDash } from "./cfetch/internal";
 import { createCommand } from "./core/create-command";
@@ -157,6 +158,12 @@ export const init = createCommand({
 				childProcess.stdout?.pipe(process.stdout);
 				childProcess.stderr?.pipe(process.stderr);
 				await childProcess;
+				if (name && !args.fromDash) {
+					await convertC3ProjectToVerglas(
+						path.resolve(process.cwd(), name),
+						packageManager
+					);
+				}
 			} catch (e: unknown) {
 				const execaError = e as ExecaError;
 				throw new Error(execaError.shortMessage, {
@@ -172,6 +179,43 @@ export const init = createCommand({
 
 function isNpm(packageManager: PackageManager) {
 	return packageManager.type === "npm";
+}
+
+/** Rewrites C3's Cloudflare-specific package metadata to use this CLI. */
+export async function convertC3ProjectToVerglas(
+	projectDirectory: string,
+	packageManager: PackageManager
+): Promise<void> {
+	const packagePath = path.join(projectDirectory, "package.json");
+	const configPath = path.join(projectDirectory, "wrangler.jsonc");
+	const packageJson = JSON.parse(await readFile(packagePath, "utf8")) as {
+		scripts?: Record<string, string>;
+		devDependencies?: Record<string, string>;
+	};
+	for (const [script, command] of Object.entries(packageJson.scripts ?? {})) {
+		packageJson.scripts![script] = command.replace(
+			/^wrangler(?=\s|$)/,
+			"verglas"
+		);
+	}
+	packageJson.devDependencies ??= {};
+	delete packageJson.devDependencies.wrangler;
+	packageJson.devDependencies.verglas = `^${verglasVersion}`;
+	await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+
+	const config = await readFile(configPath, "utf8");
+	await writeFile(
+		configPath,
+		config.replace(
+			"node_modules/wrangler/config-schema.json",
+			"node_modules/verglas/config-schema.json"
+		)
+	);
+
+	await execa(packageManager.type, ["install"], {
+		cwd: projectDirectory,
+		stdio: "inherit",
+	});
 }
 
 export async function downloadWorker(accountId: string, workerName: string) {
