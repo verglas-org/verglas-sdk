@@ -5,14 +5,30 @@
 	"description": "Run Worker and Durable Object WASM products on the Verglas edge runtime.",
 	"colors": {
 		"primary": "#1464F4",
-		"light": "#19CAD1",
+		"light": "#5EEAD4",
 		"dark": "#3B82F6"
+	},
+	"logo": {
+		"light": "/docs/assets/verglas-mark.png",
+		"dark": "/docs/assets/verglas-mark.png",
+		"href": "https://verglas.dev"
+	},
+	"favicon": "/docs/assets/verglas-favicon.png",
+	"fonts": {
+		"family": "IBM Plex Sans"
+	},
+	"icons": {
+		"library": "lucide"
 	},
 	"background": {
 		"color": {
-			"light": "#F7FAFF",
-			"dark": "#07111C"
+			"light": "#F6F9FF",
+			"dark": "#0B0F14"
 		}
+	},
+	"thumbnails": {
+		"appearance": "dark",
+		"background": "/docs/assets/verglas-banner.png"
 	},
 	"appearance": {
 		"default": "system"
