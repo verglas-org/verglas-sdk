@@ -168,6 +168,7 @@ async function deployWorker(
 	buildResult: WorkerBuildResult,
 	callbacks: DeployCallbacks
 ): Promise<DeployResult> {
+	const verglasFastPath = process.env.VERGLAS_API_BASE_URL !== undefined;
 	const { entry, compatibilityDate, compatibilityFlags, keepVars, accountId } =
 		props;
 
@@ -195,7 +196,7 @@ async function deployWorker(
 	const { format } = entry;
 	const { projectRoot } = entry;
 
-	if (!props.dispatchNamespace && accountId && scriptName) {
+	if (!verglasFastPath && !props.dispatchNamespace && accountId && scriptName) {
 		const yes = await confirmLatestDeploymentOverwrite(
 			config,
 			accountId,
@@ -529,15 +530,27 @@ async function deployWorker(
 
 				try {
 					// Update tail consumers, logpush, and observability settings
-					await patchNonVersionedScriptSettings(config, accountId, scriptName, {
-						tail_consumers: worker.tail_consumers,
-						logpush: worker.logpush,
-						// If the user hasn't specified observability assume that they want it disabled if they have it on.
-						// This is a no-op in the event that they don't have observability enabled, but will remove observability
-						// if it has been removed from their Wrangler configuration file
-						observability: worker.observability ?? { enabled: false },
-						tags: nextTags,
-					});
+					if (
+						!verglasFastPath ||
+						(worker.tail_consumers?.length ?? 0) > 0 ||
+						worker.logpush ||
+						worker.observability !== undefined ||
+						nextTags.length > 0
+					) {
+						await patchNonVersionedScriptSettings(
+							config,
+							accountId,
+							scriptName,
+							{
+								tail_consumers: worker.tail_consumers,
+								logpush: worker.logpush,
+								// Cloudflare needs an explicit disable to reconcile dashboard state.
+								// Verglas skips that round trip unless settings were configured.
+								observability: worker.observability ?? { enabled: false },
+								tags: nextTags,
+							}
+						);
+					}
 				} catch {
 					warnOnErrorUpdatingServiceAndEnvironmentTags();
 				}
@@ -714,17 +727,22 @@ async function deployWorker(
 	}
 	assert(accountId);
 	// deploy triggers
-	const targets = await triggersDeploy({
-		config,
-		accountId,
-		scriptName,
-		workerTag,
-		crons: props.triggers,
-		firstDeploy: !workerExists,
-		routes: props.routes,
-		validated: true,
-		dryRun: false,
-	});
+	const targets =
+		verglasFastPath &&
+		(props.triggers?.length ?? 0) === 0 &&
+		props.routes.length === 0
+			? []
+			: await triggersDeploy({
+					config,
+					accountId,
+					scriptName,
+					workerTag,
+					crons: props.triggers,
+					firstDeploy: !workerExists,
+					routes: props.routes,
+					validated: true,
+					dryRun: false,
+				});
 
 	logger.log("Current Version ID:", versionId);
 

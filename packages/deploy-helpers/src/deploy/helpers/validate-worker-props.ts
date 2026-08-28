@@ -144,8 +144,20 @@ export async function preUploadApiChecks(
 	config: Config
 ): Promise<PreUploadApiChecksResult> {
 	const { accountId, name } = props;
+	const verglasFastPath = process.env.VERGLAS_API_BASE_URL !== undefined;
 
 	if (props.dryRun || !accountId || !name) {
+		return {
+			workerTag: null,
+			tags: [],
+			workerExists: true,
+			aborted: false,
+		};
+	}
+	// Verglas deploys immutable versions and atomically activates one at 100%.
+	// It has no dashboard-side mutable source state to diff, so Cloudflare's
+	// service metadata collision check is pure latency on every deploy.
+	if (verglasFastPath) {
 		return {
 			workerTag: null,
 			tags: [],
