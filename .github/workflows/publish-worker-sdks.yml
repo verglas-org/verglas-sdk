@@ -33,18 +33,16 @@ jobs:
         run: |
           name=$(node -p "require('./packages/worker-js/package.json').name")
           version=$(node -p "require('./packages/worker-js/package.json').version")
+          package_path=$(node -p "encodeURIComponent(require('./packages/worker-js/package.json').name)")
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if npm view "$name@$version" version >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Verify npm publishing identity
-        if: steps.release.outputs.exists != 'true'
-        run: npm whoami
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          status=$(curl --retry 3 --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            "https://registry.npmjs.org/$package_path/$version")
+          case "$status" in
+            200) echo "exists=true" >> "$GITHUB_OUTPUT" ;;
+            404) echo "exists=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "npm registry returned HTTP $status for $name@$version" >&2; exit 1 ;;
+          esac
       - name: Publish JavaScript Worker SDK
         if: steps.release.outputs.exists != 'true'
         run: pnpm publish --access public --no-git-checks
@@ -81,18 +79,16 @@ jobs:
         run: |
           name=$(node -p "require('./packages/verglas/package.json').name")
           version=$(node -p "require('./packages/verglas/package.json').version")
+          package_path=$(node -p "encodeURIComponent(require('./packages/verglas/package.json').name)")
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if npm view "$name@$version" version >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Verify npm publishing identity
-        if: steps.release.outputs.exists != 'true'
-        run: npm whoami
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          status=$(curl --retry 3 --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            "https://registry.npmjs.org/$package_path/$version")
+          case "$status" in
+            200) echo "exists=true" >> "$GITHUB_OUTPUT" ;;
+            404) echo "exists=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "npm registry returned HTTP $status for $name@$version" >&2; exit 1 ;;
+          esac
       - name: Publish Verglas CLI
         if: steps.release.outputs.exists != 'true'
         run: pnpm publish --access public --no-git-checks
@@ -116,11 +112,13 @@ jobs:
         run: |
           version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' packages/worker-py/pyproject.toml)
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if curl --fail --silent --show-error "https://pypi.org/pypi/verglas-worker/$version/json" >/dev/null; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          status=$(curl --retry 3 --silent --show-error --output /dev/null --write-out "%{http_code}" \
+            "https://pypi.org/pypi/verglas-worker/$version/json")
+          case "$status" in
+            200) echo "exists=true" >> "$GITHUB_OUTPUT" ;;
+            404) echo "exists=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "PyPI returned HTTP $status for verglas-worker@$version" >&2; exit 1 ;;
+          esac
       - if: steps.release.outputs.exists != 'true'
         run: python3 -m unittest discover -s packages/worker-py/tests -v
       - if: steps.release.outputs.exists != 'true'
