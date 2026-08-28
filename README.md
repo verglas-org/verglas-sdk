@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/verglas-mark.png" alt="Verglas" width="112">
+</p>
+
 # Verglas SDK
 
 This repository contains the public Verglas developer surface: the Worker CLI,
