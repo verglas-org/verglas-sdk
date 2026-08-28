@@ -34,7 +34,7 @@ below assumes the embedding client returns the correct dimensions.
 ## Index documents
 
 ```js
-async function indexDocument(document, previousChunkIds, env) {
+async function indexDocument(document, env, previousChunkIds = []) {
   const chunks = splitIntoChunks(document.text, 800);
   const vectors = [];
 
