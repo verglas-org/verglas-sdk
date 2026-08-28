@@ -1,0 +1,47 @@
+---
+title: "Recipes"
+description: "Common data and application patterns expressed with Verglas Workers and Durable Objects."
+icon: "book-open"
+---
+
+These recipes adapt established streaming and lakehouse patterns to the Verglas
+component model. Instead of provisioning a cluster, assign each responsibility
+to a Worker, Durable Object, Stream, Pipeline, or built-in state binding.
+
+<CardGroup cols={2}>
+  <Card title="Webhook to lakehouse" icon="webhook" href="/docs/recipes/webhook-to-lakehouse">
+    Acknowledge quickly, ingest durably, normalize, and publish to Iceberg.
+  </Card>
+  <Card title="Deduplicate events" icon="copy-check" href="/docs/recipes/deduplicate-events">
+    Use a keyed Durable Object before an event enters the Stream.
+  </Card>
+  <Card title="Bronze, silver, gold" icon="layers-3" href="/docs/recipes/medallion-pipeline">
+    Turn the medallion pattern into serverless resource boundaries.
+  </Card>
+  <Card title="Semantic search" icon="scan-search" href="/docs/recipes/semantic-search">
+    Store embeddings in Vectorize and serve ranked results from a Worker.
+  </Card>
+</CardGroup>
+
+## Pattern translation
+
+| Conventional data platform | Verglas component |
+| --- | --- |
+| Ingestion service | Worker + Stream binding |
+| Partitioned stateful operator | Named Durable Object |
+| Streaming transform job | Pipeline SQL |
+| Retry/checkpoint database | Pipeline Durable Object |
+| Data-lake writer | Sink + Catalog |
+| Serving database or materialized view | Query Durable Object |
+| Vector database | Vectorize binding |
+
+## Sources behind the patterns
+
+The recipes are original Verglas implementations informed by the official
+documentation for [Databricks medallion
+architecture](https://docs.databricks.com/aws/en/lakehouse/medallion), [Apache
+Flink deduplication](https://nightlies.apache.org/flink/flink-docs-stable/docs/sql/reference/queries/deduplication/),
+[Apache Iceberg table
+maintenance](https://iceberg.apache.org/docs/latest/flink-maintenance/), and
+[Cloudflare Vectorize](https://developers.cloudflare.com/vectorize/). They copy
+the useful architectural ideas, not vendor-specific cluster or job machinery.

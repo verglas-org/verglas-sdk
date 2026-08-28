@@ -1,27 +1,55 @@
 ---
-title: "Verglas products and infrastructure"
-description: "The nine Worker/DO products and the shared runtime capabilities beneath them."
+title: "Verglas"
+description: "Build serverless Workers with stateful Durable Objects and data pipelines."
 icon: "snowflake"
 ---
 
-Verglas has exactly nine products: Worker, Durable Object, Stream, Pipeline,
-Sink, Catalog, Vectorize, Graph, and Query. Worker is stateless. Durable Object is a Turso-backed
-stateful Worker class. Stream, Pipeline, Sink, Catalog, Vectorize, Graph, and Query are prebuilt
-Worker/DO deployments. Read the [normative platform
-page](/docs/architecture/primitives-platform) for the complete definitions and
-PP1–PP10 criteria.
+Verglas is a serverless compute and data platform built around two modern cloud
+components:
 
-The same repository contains the Wasmtime runtime, Foyer cache, origin access,
-Iceberg commit capability, and Catalog libraries shared by those products.
-These are implementation layers, not extra products.
+- **Workers** run stateless request and event handlers.
+- **Durable Objects** give a named object serialized execution, durable storage,
+  SQL, alarms, and WebSockets.
 
-## Where to go next
+The platform places and scales these components automatically. You write a
+Cloudflare-compatible Worker, declare the bindings it can use, and deploy it.
+There are no servers, shards, or worker pools to provision.
+
+Streams, pipelines, Iceberg tables, vector indexes, graphs, and query read
+models are built from the same Worker and Durable Object model. They are
+composable bindings—not separate runtimes you have to operate.
 
 <CardGroup cols={2}>
-  <Card title="Nine-product platform" icon="diagram-project" href="/docs/architecture/primitives-platform">
-    Follow Worker, Durable Object, Stream, Pipeline, Sink, Catalog, Vectorize, Graph, and Query ownership.
+  <Card title="Build your first Worker" icon="rocket" href="/docs/get-started/quickstart">
+    Install the CLI, log in, run locally, and deploy.
   </Card>
-  <Card title="Understand the architecture" icon="compass-drafting" href="/docs/architecture/overview">
-    Follow product bindings and the shared runtime capabilities.
+  <Card title="Understand the platform" icon="blocks" href="/docs/concepts/platform">
+    See how Workers, Durable Objects, and bindings fit together.
+  </Card>
+  <Card title="Use built-in components" icon="database" href="/docs/built-ins/overview">
+    Add durable state, pipelines, Iceberg, vector search, graphs, and queries.
+  </Card>
+  <Card title="Start from a recipe" icon="book-open" href="/docs/recipes/overview">
+    Build ingestion, lakehouse, deduplication, and semantic-search flows.
   </Card>
 </CardGroup>
+
+## The programming model
+
+```mermaid
+flowchart LR
+    R["HTTP, schedules, events"] --> W["Worker\nstateless compute"]
+    W --> D["Durable Object\nstate + coordination"]
+    W --> B["Built-in bindings"]
+    B --> L["Streams, pipelines, Iceberg,\nvector, graph, query"]
+```
+
+An application can stay as small as one Worker, add a Durable Object when it
+needs coordination or state, and add data bindings when it needs ingestion or
+specialized storage. Each binding is explicit in `wrangler.jsonc`, so a Worker
+only receives the capabilities you declare.
+
+<Note>
+Verglas follows the Cloudflare Workers authoring and configuration model. The
+runtime executes the deployed component on Verglas infrastructure.
+</Note>

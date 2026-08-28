@@ -1,0 +1,73 @@
+---
+title: "Vectorize"
+description: "Store embeddings and run bounded similarity search from a Worker."
+icon: "scan-search"
+---
+
+Vectorize is a named Durable Object with vector CRUD, namespace and metadata
+filtering, and similarity search. Create an index with fixed dimensions and one
+metric: `cosine`, `euclidean`, or `dot-product`.
+
+## Bind an index
+
+```jsonc
+{
+  "vectorize": [
+    { "binding": "DOCUMENTS", "index_name": "product-docs" }
+  ]
+}
+```
+
+## Insert or update vectors
+
+```js
+await env.DOCUMENTS.upsert([
+  {
+    id: "doc-42",
+    values: embedding,
+    namespace: "guides",
+    metadata: { title: "Deploy a Worker", locale: "en" },
+  },
+]);
+```
+
+`insert` preserves an existing ID; `upsert` fully replaces it. The mutation is
+visible when the promise resolves.
+
+## Query
+
+```js
+const result = await env.DOCUMENTS.query(queryEmbedding, {
+  topK: 5,
+  namespace: "guides",
+  returnMetadata: "all",
+  filter: { locale: "en" },
+});
+```
+
+You can also search using a stored vector:
+
+```js
+const similar = await env.DOCUMENTS.queryById("doc-42", { topK: 5 });
+```
+
+## Complete API
+
+| Method | Purpose |
+| --- | --- |
+| `insert(vectors)` | Add IDs without replacement |
+| `upsert(vectors)` | Add or replace IDs |
+| `query(vector, options)` | Find nearest vectors |
+| `queryById(id, options)` | Use an existing vector as the query |
+| `getByIds(ids)` | Fetch complete vectors |
+| `deleteByIds(ids)` | Remove vectors |
+| `describe()` | Inspect immutable index configuration and progress |
+
+Requests accept ordinary arrays, `Float32Array`, or `Float64Array`. Query
+`topK` is between 1 and 100; batch ID operations accept at most 1,000 IDs.
+
+<Note>
+Vectorize performs exact native Turso similarity search. A query with more than
+10,000 eligible rows fails explicitly instead of silently switching to an
+approximate or remote index.
+</Note>
