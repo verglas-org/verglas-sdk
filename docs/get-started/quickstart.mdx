@@ -1,0 +1,83 @@
+---
+title: "Build your first Worker"
+description: "Install the Verglas CLI, log in, develop locally, and deploy."
+icon: "rocket"
+---
+
+## Prerequisites
+
+Install a current Node.js release. The Verglas CLI is published to npm as
+`verglas`; `npx` can run it without a global installation.
+
+## 1. Log in
+
+```bash
+npx verglas login
+```
+
+The CLI opens the Verglas sign-in flow in your browser and completes the
+short-lived handoff on `localhost:3080`. The resulting credential is stored in
+`~/.verglas/credentials.json` with owner-only permissions.
+
+For CI, set `VERGLAS_API_TOKEN` and `VERGLAS_ACCOUNT_ID` instead of using the
+browser flow.
+
+## 2. Create a project
+
+```bash
+npx verglas init hello-verglas -y
+cd hello-verglas
+```
+
+The generated `wrangler.jsonc` points to the Worker entry module:
+
+```jsonc
+{
+  "$schema": "node_modules/verglas/config-schema.json",
+  "name": "hello-verglas",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-08-27"
+}
+```
+
+Replace `src/index.ts` with:
+
+```ts
+export default {
+  async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+
+    return Response.json({
+      message: "Hello from Verglas",
+      path: url.pathname,
+    });
+  },
+};
+```
+
+## 3. Run locally
+
+```bash
+npx verglas dev
+```
+
+Open the local URL printed by the CLI. Source changes reload the Worker.
+
+## 4. Deploy
+
+```bash
+npx verglas deploy
+```
+
+The CLI builds the Worker, uploads its component, and prints the deployed URL.
+Verglas handles placement and scaling from that point forward.
+
+## Next step
+
+Add durable state with a [Durable Object](/docs/built-ins/durable-objects), or
+send events into a [Stream and Pipeline](/docs/built-ins/streams-pipelines).
+
+<Tip>
+Use `npx verglas whoami` to inspect the active account and `npx verglas logout`
+to remove the local credential.
+</Tip>

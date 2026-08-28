@@ -1,0 +1,38 @@
+---
+title: "Built-in components"
+description: "Choose the state and data binding that matches your workload."
+icon: "database"
+---
+
+Verglas includes prebuilt Durable Objects for common state and data workloads.
+They use the same placement, isolation, storage, and binding model as your own
+code.
+
+| Component | Use it for | Worker API |
+| --- | --- | --- |
+| Durable Object | Per-key state, coordination, SQL, alarms, WebSockets | `env.NAME.get(id).fetch(...)` |
+| Stream | Durable ordered JSON ingestion | `env.STREAM.send(records)` |
+| Pipeline | Filter, project, fan out, and checkpoint Stream records | Configured SQL |
+| Sink + Catalog | Idempotent Parquet publication to Iceberg | Pipeline destination / Iceberg REST |
+| Query | Durable aggregate read models | `env.QUERY.query(endpoint, params)` |
+| Vectorize | Vector CRUD and similarity search | `insert`, `upsert`, `query`, `queryById` |
+| Graph | Property graph CRUD and bounded traversal | `neighbors`, `shortestPath` |
+
+These names describe component roles, not separate infrastructure products. A
+Stream is a Durable Object specialized for append and read. A Pipeline is a
+Durable Object specialized for a cursor and retry state. Their capacity follows
+the same serverless object model.
+
+## Pick the smallest component
+
+- Start with a Worker for stateless request handling.
+- Add your own Durable Object when the state model is application-specific.
+- Add a Stream when events must survive beyond a request.
+- Add a Pipeline when those events need repeatable transformation and delivery.
+- Add Vectorize or Graph when the access pattern is similarity or traversal.
+- Add Query when a low-latency endpoint should read a maintained aggregate.
+
+<Note>
+Bindings use fixed resource names. Code cannot construct an arbitrary Stream,
+index, graph, or query name at runtime.
+</Note>

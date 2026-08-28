@@ -1,0 +1,102 @@
+---
+title: "Semantic search"
+description: "Generate embeddings, upsert them into Vectorize, and serve filtered similarity results."
+icon: "scan-search"
+---
+
+Semantic search has two paths: index content when it changes, then embed and
+query user text at request time. The embedding model is external to Vectorize;
+use the same model and dimensions for both paths.
+
+```mermaid
+flowchart LR
+    D["Documents"] --> I["Indexing Worker\nchunk + embed"]
+    I --> V["Vectorize"]
+    U["Search request"] --> Q["Search Worker\nembed query"]
+    Q --> V
+    V --> Q
+    Q --> U
+```
+
+## Bind the index
+
+```jsonc
+{
+  "vectorize": [
+    { "binding": "DOCS", "index_name": "documentation" }
+  ]
+}
+```
+
+The index is created with fixed dimensions and a distance metric. The example
+below assumes the embedding client returns the correct dimensions.
+
+## Index documents
+
+```js
+async function indexDocument(document, env) {
+  const chunks = splitIntoChunks(document.text, 800);
+  const vectors = [];
+
+  for (let i = 0; i < chunks.length; i += 1) {
+    const values = await embed(chunks[i], env.EMBEDDING_API_KEY);
+    vectors.push({
+      id: `${document.id}:${i}`,
+      values,
+      namespace: document.tenant_id,
+      metadata: {
+        document_id: document.id,
+        title: document.title,
+        chunk: chunks[i],
+        locale: document.locale,
+      },
+    });
+  }
+
+  await env.DOCS.upsert(vectors);
+}
+```
+
+Use stable IDs so re-indexing replaces the same chunks. Delete IDs that no
+longer exist when a document becomes shorter.
+
+## Serve search
+
+```js
+export default {
+  async fetch(request, env) {
+    const { query, tenant_id, locale = "en" } = await request.json();
+    const queryVector = await embed(query, env.EMBEDDING_API_KEY);
+
+    const matches = await env.DOCS.query(queryVector, {
+      topK: 8,
+      namespace: tenant_id,
+      returnMetadata: "all",
+      filter: { locale },
+    });
+
+    return Response.json(matches);
+  },
+};
+```
+
+The namespace provides tenant isolation within the index. Metadata filters
+narrow eligible records before similarity scoring.
+
+## Add retrieval-augmented generation
+
+For RAG, take the highest-scoring chunks, enforce an application score
+threshold, and supply their text as context to a generation model. Keep source
+IDs and titles in the response so the application can cite the original
+document.
+
+## Operational guidance
+
+- Pin the embedding model and dimensions; changing either requires a new index.
+- Batch `upsert` calls, with at most 1,000 IDs per batch operation.
+- Keep sensitive full documents outside vector metadata when snippets are not
+  safe to return.
+- Measure relevance before tuning `topK`; more matches do not automatically
+  improve answers.
+- Use a Stream and Pipeline ahead of the indexing Worker when document changes
+  must be retained and replayed.

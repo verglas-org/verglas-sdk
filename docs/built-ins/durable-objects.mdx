@@ -1,0 +1,100 @@
+---
+title: "Durable Objects"
+description: "Build named stateful components with serialized events, SQL, alarms, and WebSockets."
+icon: "box"
+---
+
+A Durable Object is the general-purpose stateful component in Verglas. Every
+object has a stable ID, receives one event at a time, and owns durable storage.
+Use one object per natural coordination key: room, tenant, customer, device,
+workflow, or document.
+
+## Define and bind an object
+
+```jsonc
+{
+  "name": "counter-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-27",
+  "durable_objects": {
+    "bindings": [{ "name": "COUNTER", "class_name": "Counter" }]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Counter"] }
+  ]
+}
+```
+
+```js
+import { DurableObject } from "cloudflare:workers";
+
+export class Counter extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.ctx.storage.sql.exec(`
+      CREATE TABLE IF NOT EXISTS counters (
+        name TEXT PRIMARY KEY,
+        value INTEGER NOT NULL
+      )
+    `);
+  }
+
+  async fetch(request) {
+    const name = new URL(request.url).searchParams.get("name") ?? "default";
+    this.ctx.storage.sql.exec(
+      `INSERT INTO counters (name, value) VALUES (?, 1)
+       ON CONFLICT(name) DO UPDATE SET value = value + 1`,
+      name,
+    );
+    const row = this.ctx.storage.sql
+      .exec("SELECT value FROM counters WHERE name = ?", name)
+      .one();
+    return Response.json(row);
+  }
+}
+
+export default {
+  async fetch(request, env) {
+    const id = env.COUNTER.idFromName("global");
+    return env.COUNTER.get(id).fetch(request);
+  },
+};
+```
+
+The named ID is deterministic. Two Worker instances that call
+`idFromName("global")` reach the same logical object, and that object serializes
+their requests.
+
+## Storage APIs
+
+```js
+await this.ctx.storage.put("status", { state: "ready" });
+const status = await this.ctx.storage.get("status");
+await this.ctx.storage.delete("status");
+
+const rows = this.ctx.storage.sql
+  .exec("SELECT * FROM jobs WHERE status = ?", "ready")
+  .toArray();
+```
+
+SQL cursors also expose `one()`, `raw()`, `columnNames`, `rowsRead`, and
+`rowsWritten`.
+
+## Alarms
+
+Schedule work on the same object without running a separate scheduler:
+
+```js
+await this.ctx.storage.setAlarm(Date.now() + 60_000);
+
+async alarm() {
+  await this.flushPendingWork();
+}
+```
+
+## Design guidance
+
+- Choose IDs that spread unrelated work across objects.
+- Keep one object responsible for one consistency boundary.
+- Put large append-only event volumes in a Stream instead of one application DO.
+- Use alarms for object-local follow-up work, not as a global batch scheduler.

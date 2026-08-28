@@ -1,0 +1,75 @@
+---
+title: "Graph"
+description: "Model relationships and run bounded deterministic traversals."
+icon: "share-2"
+---
+
+Graph is a named Durable Object for property-graph data. Nodes and edges have
+stable IDs, a `kind`, and optional JSON properties. Edges are directed and may
+have a numeric weight.
+
+## Bind a graph
+
+```jsonc
+{
+  "graphs": [
+    { "binding": "KNOWLEDGE", "graph_name": "company-knowledge" }
+  ]
+}
+```
+
+## Write nodes and edges
+
+```js
+await env.KNOWLEDGE.upsertNodes([
+  { id: "alice", kind: "person", properties: { team: "data" } },
+  { id: "worker-docs", kind: "document", properties: { public: true } },
+]);
+
+await env.KNOWLEDGE.upsertEdges([
+  {
+    id: "alice-authored-worker-docs",
+    from: "alice",
+    to: "worker-docs",
+    kind: "authored",
+    weight: 1,
+  },
+]);
+```
+
+## Traverse
+
+```js
+const neighborhood = await env.KNOWLEDGE.neighbors("alice", {
+  direction: "out",
+  edgeKinds: ["authored"],
+  depth: 2,
+  limit: 100,
+  returnNodes: true,
+  returnEdges: true,
+});
+
+const path = await env.KNOWLEDGE.shortestPath("alice", "worker-docs", {
+  direction: "both",
+  maxDepth: 4,
+});
+```
+
+Depth is bounded from 1 through 8. Traversal limits are part of the API so one
+request cannot turn into an unbounded graph scan.
+
+## Complete API
+
+| Method | Purpose |
+| --- | --- |
+| `upsertNodes`, `upsertEdges` | Add or fully replace entities |
+| `getNodes`, `getEdges` | Fetch entities in requested ID order |
+| `deleteNodes` | Delete nodes and incident edges atomically |
+| `deleteEdges` | Delete edges by ID |
+| `neighbors` | Traverse a bounded neighborhood |
+| `shortestPath` | Find one deterministic unweighted path |
+| `describe` | Inspect graph identity and durable counts |
+
+Create property indexes for fields used in `nodeFilter` or `edgeFilter`. A
+Graph is best for bounded application traversal; publish event history to
+Iceberg when you also need large analytical scans.

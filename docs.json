@@ -2,7 +2,7 @@
 	"$schema": "https://mintlify.com/docs.json",
 	"theme": "mint",
 	"name": "Verglas",
-	"description": "Run Worker and Durable Object WASM products on the Verglas edge runtime.",
+	"description": "Build serverless Workers, Durable Objects, and data pipelines on Verglas.",
 	"colors": {
 		"primary": "#1464F4",
 		"light": "#5EEAD4",
@@ -38,24 +38,34 @@
 			{
 				"group": "Get started",
 				"icon": "rocket",
-				"pages": ["docs/index", "docs/get-started/self-host"]
+				"pages": ["docs/index", "docs/get-started/quickstart"]
 			},
 			{
-				"group": "Architecture",
-				"icon": "compass-drafting",
+				"group": "Concepts",
+				"icon": "blocks",
+				"pages": ["docs/concepts/platform"]
+			},
+			{
+				"group": "Built-ins",
+				"icon": "database",
 				"pages": [
-					"docs/architecture/overview",
-					"docs/architecture/whitepaper",
-					"docs/architecture/rime",
-					"docs/architecture/iceberg",
-					"docs/architecture/execution",
-					"docs/architecture/do-workers",
-					"docs/architecture/primitives-platform",
-					"docs/architecture/cloudflare-compat",
-					"docs/architecture/do-event-protocol",
-					"docs/architecture/durable-objects",
-					"docs/architecture/cells",
-					"docs/architecture/benchmarks"
+					"docs/built-ins/overview",
+					"docs/built-ins/durable-objects",
+					"docs/built-ins/streams-pipelines",
+					"docs/built-ins/catalog-query",
+					"docs/built-ins/vectorize",
+					"docs/built-ins/graph"
+				]
+			},
+			{
+				"group": "Recipes",
+				"icon": "book-open",
+				"pages": [
+					"docs/recipes/overview",
+					"docs/recipes/webhook-to-lakehouse",
+					"docs/recipes/deduplicate-events",
+					"docs/recipes/medallion-pipeline",
+					"docs/recipes/semantic-search"
 				]
 			}
 		]
@@ -70,8 +80,8 @@
 		],
 		"primary": {
 			"type": "button",
-			"label": "Self-host",
-			"href": "/docs/get-started/self-host"
+			"label": "Get started",
+			"href": "/docs/get-started/quickstart"
 		}
 	},
 	"footer": {
