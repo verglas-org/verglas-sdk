@@ -1,6 +1,6 @@
 {
 	"name": "verglas",
-	"version": "4.127.1",
+	"version": "0.2.0",
 	"description": "Command-line interface for all things Verglas Workers",
 	"keywords": [
 		"assembly",
