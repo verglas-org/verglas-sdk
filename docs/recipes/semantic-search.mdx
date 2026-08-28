@@ -34,7 +34,7 @@ below assumes the embedding client returns the correct dimensions.
 ## Index documents
 
 ```js
-async function indexDocument(document, env) {
+async function indexDocument(document, previousChunkIds, env) {
   const chunks = splitIntoChunks(document.text, 800);
   const vectors = [];
 
@@ -53,24 +53,36 @@ async function indexDocument(document, env) {
     });
   }
 
-  await env.DOCS.upsert(vectors);
+  for (let start = 0; start < vectors.length; start += 1000) {
+    await env.DOCS.upsert(vectors.slice(start, start + 1000));
+  }
+
+  const currentIds = new Set(vectors.map((vector) => vector.id));
+  const obsoleteIds = previousChunkIds.filter((id) => !currentIds.has(id));
+  for (let start = 0; start < obsoleteIds.length; start += 1000) {
+    await env.DOCS.deleteByIds(obsoleteIds.slice(start, start + 1000));
+  }
+
+  return [...currentIds];
 }
 ```
 
-Use stable IDs so re-indexing replaces the same chunks. Delete IDs that no
-longer exist when a document becomes shorter.
+Use stable IDs so re-indexing replaces the same chunks. Persist the returned ID
+list with the source document and supply it as `previousChunkIds` next time;
+that removes stale vectors when a document becomes shorter.
 
 ## Serve search
 
 ```js
 export default {
   async fetch(request, env) {
-    const { query, tenant_id, locale = "en" } = await request.json();
+    const principal = await requirePrincipal(request, env);
+    const { query, locale = "en" } = await request.json();
     const queryVector = await embed(query, env.EMBEDDING_API_KEY);
 
     const matches = await env.DOCS.query(queryVector, {
       topK: 8,
-      namespace: tenant_id,
+      namespace: principal.tenantId,
       returnMetadata: "all",
       filter: { locale },
     });
@@ -80,8 +92,8 @@ export default {
 };
 ```
 
-The namespace provides tenant isolation within the index. Metadata filters
-narrow eligible records before similarity scoring.
+Derive the namespace from the authenticated principal, never a caller-supplied
+tenant ID. Metadata filters narrow eligible records before similarity scoring.
 
 ## Add retrieval-augmented generation
 
@@ -92,7 +104,9 @@ document.
 
 ## Operational guidance
 
-- Pin the embedding model and dimensions; changing either requires a new index.
+- Pin the embedding model. When a replacement keeps the same dimensions,
+  re-embed and upsert every document. Create a new index when dimensions or the
+  distance metric change.
 - Batch `upsert` calls, with at most 1,000 IDs per batch operation.
 - Keep sensitive full documents outside vector metadata when snippets are not
   safe to return.

@@ -30,6 +30,20 @@ await env.RAW_EVENTS.send([{
 }]);
 ```
 
+Create `raw_events` as a structured Stream. The binding only references the
+resource; the immutable schema is part of Stream creation:
+
+```json
+{
+  "fields": [
+    { "name": "source", "type": "string", "required": true },
+    { "name": "source_id", "type": "string", "required": true },
+    { "name": "ingested_at", "type": "timestamp", "required": true },
+    { "name": "payload", "type": "json", "required": true }
+  ]
+}
+```
+
 The first Pipeline statement copies that envelope to a raw Iceberg Sink:
 
 ```sql
@@ -66,6 +80,7 @@ INSERT INTO rejected_transactions
 SELECT source_id, ingested_at, payload, 'validation failed' AS reason
 FROM raw_events
 WHERE payload.customer_id IS NULL
+   OR payload.amount IS NULL
    OR payload.amount < 0
    OR payload.currency IS NULL;
 ```

@@ -28,7 +28,7 @@ flowchart LR
     { "tag": "v1", "new_sqlite_classes": ["EventDeduplicator"] }
   ],
   "pipelines": [
-    { "binding": "EVENTS", "stream": "accepted-events" }
+    { "binding": "EVENTS", "stream": "accepted_events" }
   ]
 }
 ```
@@ -59,12 +59,12 @@ export class EventDeduplicator extends DurableObject {
       return Response.json({ accepted: true, duplicate: true });
     }
 
-    await this.env.EVENTS.send([event]);
     this.ctx.storage.sql.exec(
       "INSERT INTO accepted (event_id, accepted_at) VALUES (?, ?)",
       event.id,
       new Date().toISOString(),
     );
+    await this.env.EVENTS.send([event]);
 
     return Response.json({ accepted: true, duplicate: false });
   }
@@ -91,9 +91,11 @@ The same event ID always reaches the same object. Unrelated IDs scale across
 different objects automatically.
 
 <Note>
-A Stream send from a Durable Object uses the object event's transactional
-binding path. The state mutation and publication are released through the same
-event boundary; a failed publication does not silently mark the ID delivered.
+A Verglas Stream binding inside a Durable Object uses the host's transactional
+`storage.stream-send` path, not an external HTTP request. The accepted-row
+mutation and publication are released through the same object event boundary;
+a failed publication does not silently mark the ID delivered. Preserve the
+event ID downstream as an additional idempotency key.
 </Note>
 
 ## Retention choices

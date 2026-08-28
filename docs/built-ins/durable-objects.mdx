@@ -5,9 +5,10 @@ icon: "box"
 ---
 
 A Durable Object is the general-purpose stateful component in Verglas. Every
-object has a stable ID, receives one event at a time, and owns durable storage.
-Use one object per natural coordination key: room, tenant, customer, device,
-workflow, or document.
+object has a stable ID, an ordered event loop, and durable storage. Use one
+object per natural coordination key: room, tenant, customer, device, workflow,
+or document. Use `ctx.blockConcurrencyWhile()` when asynchronous initialization
+must finish before any handler is dispatched.
 
 ## Define and bind an object
 
@@ -85,10 +86,15 @@ SQL cursors also expose `one()`, `raw()`, `columnNames`, `rowsRead`, and
 Schedule work on the same object without running a separate scheduler:
 
 ```js
-await this.ctx.storage.setAlarm(Date.now() + 60_000);
+export class Reminder extends DurableObject {
+  async fetch() {
+    await this.ctx.storage.setAlarm(Date.now() + 60_000);
+    return new Response(null, { status: 202 });
+  }
 
-async alarm() {
-  await this.flushPendingWork();
+  async alarm() {
+    await this.flushPendingWork();
+  }
 }
 ```
 

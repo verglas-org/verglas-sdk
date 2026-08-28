@@ -56,7 +56,7 @@ device, or tenant can each be its own unit of state and concurrency.
   "durable_objects": {
     "bindings": [{ "name": "ORDERS", "class_name": "Order" }]
   },
-  "pipelines": [{ "binding": "EVENTS", "stream": "order-events" }],
+  "pipelines": [{ "binding": "EVENTS", "stream": "order_events" }],
   "vectorize": [{ "binding": "SEARCH", "index_name": "products" }]
 }
 ```

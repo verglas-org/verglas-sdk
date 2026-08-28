@@ -24,7 +24,7 @@ flowchart LR
   "main": "worker.js",
   "compatibility_date": "2026-08-27",
   "pipelines": [
-    { "binding": "WEBHOOKS", "stream": "partner-webhooks" }
+    { "binding": "WEBHOOKS", "stream": "partner_webhooks" }
   ],
   "vars": {
     "WEBHOOK_ISSUER": "partner"
@@ -34,6 +34,21 @@ flowchart LR
 
 Store the verification secret as an encrypted deployment secret, not in
 `vars`.
+
+Create `partner_webhooks` with an immutable structured schema. The binding
+references this resource; it does not define its schema:
+
+```json
+{
+  "fields": [
+    { "name": "event_id", "type": "string", "required": true },
+    { "name": "event_type", "type": "string", "required": true },
+    { "name": "issuer", "type": "string", "required": true },
+    { "name": "received_at", "type": "timestamp", "required": true },
+    { "name": "payload", "type": "json", "required": true }
+  ]
+}
+```
 
 ## 2. Verify and ingest
 
@@ -52,7 +67,12 @@ export default {
     );
     if (!valid) return new Response("Invalid signature", { status: 401 });
 
-    const payload = JSON.parse(raw);
+    let payload;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return new Response("Invalid JSON", { status: 400 });
+    }
     await env.WEBHOOKS.send([{
       event_id: payload.id,
       event_type: payload.type,
