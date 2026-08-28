@@ -1,5 +1,11 @@
 # wrangler
 
+## 0.2.2
+
+### Patch Changes
+
+- Generate self-contained Verglas projects from `verglas init`. New projects now install the Verglas CLI, use it in package scripts, and reference its configuration schema instead of retaining Cloudflare Wrangler metadata from the underlying scaffold.
+
 ## 4.127.0
 
 ### Minor Changes

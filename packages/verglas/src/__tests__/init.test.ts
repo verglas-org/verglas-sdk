@@ -13,7 +13,7 @@ import { FormData } from "undici";
  * TODO: remove this `expect` import
  */
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
-import { downloadWorker } from "../init";
+import { convertC3ProjectToVerglas, downloadWorker } from "../init";
 import { writeMetricsConfig } from "../metrics/metrics-config";
 import { getPackageManager } from "../package-manager";
 import { mockAccountId, mockApiToken } from "./helpers/mock-account-id";
@@ -100,6 +100,49 @@ describe("init", () => {
 					stdio: ["inherit", "pipe", "pipe"],
 				}
 			);
+		});
+
+		it("converts C3 output into a self-contained Verglas project", async () => {
+			const projectDirectory = path.join(process.cwd(), "hello-verglas");
+			fs.mkdirSync(projectDirectory);
+			fs.writeFileSync(
+				path.join(projectDirectory, "package.json"),
+				JSON.stringify({
+					scripts: {
+						deploy: "wrangler deploy",
+						dev: "wrangler dev",
+						test: "vitest",
+					},
+					devDependencies: { wrangler: "^4.127.0", vitest: "^4.1.0" },
+				})
+			);
+			fs.writeFileSync(
+				path.join(projectDirectory, "wrangler.jsonc"),
+				'{ "$schema": "node_modules/wrangler/config-schema.json" }\n'
+			);
+
+			await convertC3ProjectToVerglas(projectDirectory, mockPackageManager);
+
+			const packageJson = JSON.parse(
+				fs.readFileSync(path.join(projectDirectory, "package.json"), "utf8")
+			) as {
+				scripts: Record<string, string>;
+				devDependencies: Record<string, string>;
+			};
+			expect(packageJson.scripts).toEqual({
+				deploy: "verglas deploy",
+				dev: "verglas dev",
+				test: "vitest",
+			});
+			expect(packageJson.devDependencies.wrangler).toBeUndefined();
+			expect(packageJson.devDependencies.verglas).toBe("^x.x.x");
+			expect(
+				fs.readFileSync(path.join(projectDirectory, "wrangler.jsonc"), "utf8")
+			).toContain("node_modules/verglas/config-schema.json");
+			expect(execa).toHaveBeenCalledWith("mockpm", ["install"], {
+				cwd: projectDirectory,
+				stdio: "inherit",
+			});
 		});
 
 		describe("with yarn package manager", () => {
