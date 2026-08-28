@@ -70,8 +70,8 @@ describe("init", () => {
 				  "err": "",
 				  "info": "",
 				  "out": "
-				 ⛅️ wrangler x.x.x
-				──────────────────
+				 ⛅️ verglas x.x.x
+				─────────────────
 				🌀 Running \`mockpm create cloudflare\`...",
 				  "warn": "",
 				}
@@ -82,12 +82,20 @@ describe("init", () => {
 			});
 		});
 
-		it("if `-y` is used, delegate to c3 with --wrangler-defaults", async () => {
+		it("if `-y` is used, create a supported Worker-only TypeScript project", async () => {
 			await runWrangler("init -y");
 
 			expect(execa).toHaveBeenCalledWith(
 				"mockpm",
-				["create", "cloudflare", "--wrangler-defaults"],
+				[
+					"create",
+					"cloudflare",
+					"--type=hello-world",
+					"--lang=ts",
+					"--no-deploy",
+					"--no-git",
+					"--no-agents",
+				],
 				{
 					stdio: ["inherit", "pipe", "pipe"],
 				}
@@ -165,8 +173,8 @@ describe("init", () => {
 					  "err": "",
 					  "info": "",
 					  "out": "
-					 ⛅️ wrangler x.x.x
-					──────────────────
+					 ⛅️ verglas x.x.x
+					─────────────────
 					🌀 Running \`mockpm run create-cloudflare\`...",
 					  "warn": "",
 					}
@@ -181,12 +189,20 @@ describe("init", () => {
 				);
 			});
 
-			it("if `-y` is used, delegate to c3 with --wrangler-defaults", async () => {
+			it("if `-y` is used, create a supported Worker-only TypeScript project", async () => {
 				await runWrangler("init -y");
 
 				expect(execa).toHaveBeenCalledWith(
 					"mockpm",
-					["run", "create-cloudflare", "--wrangler-defaults"],
+					[
+						"run",
+						"create-cloudflare",
+						"--type=hello-world",
+						"--lang=ts",
+						"--no-deploy",
+						"--no-git",
+						"--no-agents",
+					],
 					{
 						stdio: ["inherit", "pipe", "pipe"],
 					}
@@ -840,8 +856,8 @@ describe("init", () => {
 				  "err": "",
 				  "info": "",
 				  "out": "
-				 ⛅️ wrangler x.x.x
-				──────────────────
+				 ⛅️ verglas x.x.x
+				─────────────────
 				🌀 Running \`mockpm create cloudflare existing-memory-crystal --existing-script existing-memory-crystal\`...",
 				  "warn": "",
 				}

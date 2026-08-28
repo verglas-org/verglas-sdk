@@ -2218,6 +2218,33 @@ describe("User", () => {
 			vi.stubEnv("CLOUDFLARE_API_TOKEN", "test-api-token");
 		});
 
+		it("should expose deployment IDs from Verglas organization discovery", async ({
+			expect,
+		}) => {
+			msw.use(
+				http.get("*/v1/me", () =>
+					HttpResponse.json({
+						identity: { email: "user@example.com" },
+						organizations: [
+							{
+								id: "org_123",
+								name: "Acme",
+								deployments: [
+									{ id: "acme-default", name: "default" },
+									{ id: "acme-analytics", name: "analytics" },
+								],
+							},
+						],
+					})
+				)
+			);
+
+			await expect(fetchAllAccounts({})).resolves.toEqual([
+				{ id: "acme-default", name: "Acme" },
+				{ id: "acme-analytics", name: "Acme / analytics" },
+			]);
+		});
+
 		it("should return the intersection of /accounts and /memberships", async ({
 			expect,
 		}) => {
