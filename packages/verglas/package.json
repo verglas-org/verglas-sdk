@@ -75,10 +75,8 @@
 		"type:tests": "tsc -p ./src/__tests__/tsconfig.json && tsc -p ./e2e/tsconfig.json"
 	},
 	"dependencies": {
-		"@bytecodealliance/componentize-js": "0.22.0",
 		"@cloudflare/kv-asset-handler": "workspace:*",
 		"@cloudflare/unenv-preset": "workspace:*",
-		"@verglas-org/worker-js": "workspace:*",
 		"blake3-wasm": "2.1.5",
 		"esbuild": "catalog:default",
 		"miniflare": "5.20260826.0-alpha",

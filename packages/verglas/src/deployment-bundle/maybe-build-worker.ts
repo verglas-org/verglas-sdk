@@ -1,7 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { validateNodeCompatMode } from "@cloudflare/deploy-helpers";
-import { UserError } from "@cloudflare/workers-utils";
 import { logger } from "../logger";
 import { isNavigatorDefined } from "../navigator-user-agent";
 import { bundleWorker } from "./bundle";
@@ -12,11 +11,6 @@ import {
 } from "./module-collection";
 import { noBundleWorker } from "./no-bundle-worker";
 import { loadSourceMaps } from "./source-maps";
-import {
-	assertVerglasUploadSupported,
-	componentizeWorker,
-	createVerglasManifest,
-} from "./verglas-component";
 import type { WorkerBuildResult } from "@cloudflare/deploy-helpers";
 import type {
 	CfModule,
@@ -70,8 +64,6 @@ export type BuildProps = {
 	outdir: string | undefined;
 	/** From --metafile arg. Deploy-only; undefined for versions upload. */
 	metafile: string | boolean | undefined;
-	/** Compile the bundled source into the Verglas component upload part. */
-	compileVerglasComponent?: boolean;
 };
 
 export async function buildWorker(
@@ -221,25 +213,6 @@ export async function buildWorker(
 	const sourceMaps = uploadSourceMaps
 		? loadSourceMaps(main, modules, bundle)
 		: undefined;
-	let verglasComponent: Uint8Array | undefined;
-	if (props.compileVerglasComponent) {
-		assertVerglasUploadSupported(config);
-		if (bundleType !== "esm") {
-			throw new UserError(
-				"Verglas immutable Worker uploads currently require module-format JavaScript (ESM). Service-worker/CommonJS uploads are not supported yet.",
-				{ telemetryMessage: "verglas upload unsupported script format" }
-			);
-		}
-		verglasComponent = await componentizeWorker({
-			content,
-			manifest: createVerglasManifest(
-				config,
-				props.name ?? "worker",
-				path.basename(resolvedEntryPointPath)
-			),
-		});
-	}
-
 	return {
 		modules,
 		sourceMaps,
@@ -247,6 +220,5 @@ export async function buildWorker(
 		resolvedEntryPointPath,
 		bundleType,
 		content,
-		verglasComponent,
 	};
 }

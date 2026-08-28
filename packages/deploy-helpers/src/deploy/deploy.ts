@@ -24,10 +24,7 @@ import {
 import { getBindings } from "./helpers/binding-utils";
 import { printBundleSize } from "./helpers/bundle-reporter";
 import { confirmLatestDeploymentOverwrite } from "./helpers/confirm-latest-deployment-overwrite";
-import {
-	addVerglasComponentToWorkerUploadForm,
-	createWorkerUploadForm,
-} from "./helpers/create-worker-upload-form";
+import { createWorkerUploadForm } from "./helpers/create-worker-upload-form";
 import { deployWfpUserWorker } from "./helpers/deploy-wfp";
 import {
 	applyServiceAndEnvironmentTags,
@@ -481,12 +478,6 @@ async function deployWorker(
 				unsafe: config.unsafe,
 			}
 		);
-		if (canUseNewVersionsDeploymentsApi && buildResult.verglasComponent) {
-			addVerglasComponentToWorkerUploadForm(
-				workerBundle,
-				buildResult.verglasComponent
-			);
-		}
 
 		let bindingsPrinted = false;
 

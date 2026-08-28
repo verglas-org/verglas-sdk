@@ -543,6 +543,8 @@ import { vpcServiceListCommand } from "./vpc/list";
 import { vpcServiceUpdateCommand } from "./vpc/update";
 import { websearchNamespace } from "./websearch/index";
 import { websearchSearchCommand } from "./websearch/search";
+import { workerBuildCommand } from "./worker/build";
+import { workerNamespace } from "./worker/index";
 import { workflowsInstanceNamespace, workflowsNamespace } from "./workflows";
 import { workflowsDeleteCommand } from "./workflows/commands/delete";
 import { workflowsDescribeCommand } from "./workflows/commands/describe";
@@ -2646,6 +2648,18 @@ export function createCLIParser(argv: string[]) {
 		},
 	]);
 	registry.registerNamespace("build");
+
+	registry.define([
+		{
+			command: "wrangler worker",
+			definition: workerNamespace,
+		},
+		{
+			command: "wrangler worker build",
+			definition: workerBuildCommand,
+		},
+	]);
+	registry.registerNamespace("worker");
 
 	// This set to false to allow overwrite of default behaviour
 	wrangler.version(false);

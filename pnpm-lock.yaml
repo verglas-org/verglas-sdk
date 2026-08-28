@@ -2457,18 +2457,12 @@ importers:
 
   packages/verglas:
     dependencies:
-      '@bytecodealliance/componentize-js':
-        specifier: 0.22.0
-        version: 0.22.0
       '@cloudflare/kv-asset-handler':
         specifier: workspace:*
         version: link:../kv-asset-handler
       '@cloudflare/unenv-preset':
         specifier: workspace:*
         version: link:../unenv-preset
-      '@verglas-org/worker-js':
-        specifier: workspace:*
-        version: link:../worker-js
       blake3-wasm:
         specifier: 2.1.5
         version: 2.1.5
