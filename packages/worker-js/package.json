@@ -1,5 +1,5 @@
 {
-	"name": "@verglas/worker-js",
+	"name": "@verglas-org/worker-js",
 	"version": "0.1.0",
 	"private": false,
 	"description": "Builds JavaScript Durable Object Workers into Verglas WebAssembly components.",

@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { removeDir, UserError } from "@cloudflare/workers-utils";
-import { workerAssetPath } from "@verglas/worker-js/assets";
+import { workerAssetPath } from "@verglas-org/worker-js/assets";
 import { build as bundle } from "esbuild";
 import { getBasePath } from "../paths";
 import type { Config, DurableObjectBindings } from "@cloudflare/workers-utils";

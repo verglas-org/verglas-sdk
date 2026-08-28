@@ -2466,7 +2466,7 @@ importers:
       '@cloudflare/unenv-preset':
         specifier: workspace:*
         version: link:../unenv-preset
-      '@verglas/worker-js':
+      '@verglas-org/worker-js':
         specifier: workspace:*
         version: link:../worker-js
       blake3-wasm:
