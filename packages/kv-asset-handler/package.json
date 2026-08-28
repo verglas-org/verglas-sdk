@@ -45,6 +45,7 @@
 		"@types/node": "catalog:default",
 		"mime": "^3.0.0",
 		"tsup": "8.3.0",
+		"typescript": "catalog:default",
 		"vitest": "catalog:default"
 	},
 	"engines": {

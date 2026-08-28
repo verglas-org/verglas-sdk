@@ -1,4 +1,4 @@
-name: Publish Worker SDKs
+name: Publish Verglas packages
 
 on:
   workflow_dispatch:
@@ -6,8 +6,12 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: publish-verglas-packages
+  cancel-in-progress: false
+
 jobs:
-  javascript:
+  javascript-sdk:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -24,20 +28,82 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
         working-directory: packages/worker-js
-      - run: npm install --global npm@11.19.1
+      - name: Read JavaScript SDK release
+        id: release
+        run: |
+          name=$(node -p "require('./packages/worker-js/package.json').name")
+          version=$(node -p "require('./packages/worker-js/package.json').version")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Verify npm publishing identity
+        if: steps.release.outputs.exists != 'true'
         run: npm whoami
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Publish JavaScript Worker SDK
-        run: npm publish --access public
+        if: steps.release.outputs.exists != 'true'
+        run: pnpm publish --access public --no-git-checks
         working-directory: packages/worker-js
         env:
           # Required only for the first publish. Once npm trusted publishing is
           # configured, remove the repository secret and npm uses OIDC.
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Report existing JavaScript Worker SDK
+        if: steps.release.outputs.exists == 'true'
+        run: echo "${{ steps.release.outputs.name }}@${{ steps.release.outputs.version }} is already published"
 
-  python:
+  cli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: pnpm install --frozen-lockfile
+      - name: Build the Verglas CLI and its workspace dependencies
+        run: pnpm build --filter verglas...
+      - name: Verify the packaged CLI starts
+        run: node packages/verglas/bin/verglas.js --version
+      - name: Read CLI release
+        id: release
+        run: |
+          name=$(node -p "require('./packages/verglas/package.json').name")
+          version=$(node -p "require('./packages/verglas/package.json').version")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify npm publishing identity
+        if: steps.release.outputs.exists != 'true'
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish Verglas CLI
+        if: steps.release.outputs.exists != 'true'
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/verglas
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Report existing CLI
+        if: steps.release.outputs.exists == 'true'
+        run: echo "${{ steps.release.outputs.name }}@${{ steps.release.outputs.version }} is already published"
+
+  python-sdk:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -45,11 +111,26 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - run: python3 -m unittest discover -s packages/worker-py/tests -v
-      - run: python3 -m venv .publish-venv
-      - run: .publish-venv/bin/python -m pip install build
-      - run: .publish-venv/bin/python -m build packages/worker-py --outdir packages/worker-py/dist
+      - name: Read Python SDK release
+        id: release
+        run: |
+          version=$(sed -n 's/^version = "\([^"]*\)"/\1/p' packages/worker-py/pyproject.toml)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if curl --fail --silent --show-error "https://pypi.org/pypi/verglas-worker/$version/json" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.release.outputs.exists != 'true'
+        run: python3 -m unittest discover -s packages/worker-py/tests -v
+      - if: steps.release.outputs.exists != 'true'
+        run: python3 -m venv .publish-venv
+      - if: steps.release.outputs.exists != 'true'
+        run: .publish-venv/bin/python -m pip install build
+      - if: steps.release.outputs.exists != 'true'
+        run: .publish-venv/bin/python -m build packages/worker-py --outdir packages/worker-py/dist
       - name: Verify installed Python package compiles a Worker
+        if: steps.release.outputs.exists != 'true'
         run: |
           python3 -m venv .e2e-venv
           .e2e-venv/bin/pip install packages/worker-py/dist/*.whl
@@ -57,5 +138,9 @@ jobs:
           test -s .e2e-worker/manifest.out.json
           test "$(find .e2e-worker -maxdepth 1 -name '*.wasm' | wc -l)" -eq 1
       - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+        if: steps.release.outputs.exists != 'true'
         with:
           packages-dir: packages/worker-py/dist/
+      - name: Report existing Python Worker SDK
+        if: steps.release.outputs.exists == 'true'
+        run: echo "verglas-worker@${{ steps.release.outputs.version }} is already published"

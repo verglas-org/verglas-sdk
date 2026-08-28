@@ -32,11 +32,11 @@
 	"author": "Verglas contributors",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/verglas-org/verglas-sdk.git",
+		"url": "git+https://github.com/verglas-org/verglas-sdk.git",
 		"directory": "packages/verglas"
 	},
 	"bin": {
-		"verglas": "./bin/verglas.js"
+		"verglas": "bin/verglas.js"
 	},
 	"files": [
 		"bin",
