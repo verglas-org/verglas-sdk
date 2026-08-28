@@ -254,6 +254,7 @@ export async function buildProject(projectDir, outputDir, gatewayPath = join(pro
       ...(manifest.queries === undefined ? {} : { queries: manifest.queries }),
       ...(manifest.triggers === undefined ? {} : { triggers: manifest.triggers }),
       artifacts,
+      data_root: 'state',
     };
     const manifestPath = join(outputDir, 'manifest.out.json');
     await writeFile(manifestPath, `${JSON.stringify(outputManifest, null, 2)}\n`, 'utf8');
