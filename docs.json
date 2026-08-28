@@ -1,12 +1,21 @@
 {
 	"$schema": "https://mintlify.com/docs.json",
-	"theme": "maple",
-	"name": "Verglas documentation",
+	"theme": "mint",
+	"name": "Verglas",
 	"description": "Run Worker and Durable Object WASM products on the Verglas edge runtime.",
 	"colors": {
-		"primary": "#2563EB",
-		"light": "#60A5FA",
-		"dark": "#1D4ED8"
+		"primary": "#1464F4",
+		"light": "#19CAD1",
+		"dark": "#3B82F6"
+	},
+	"background": {
+		"color": {
+			"light": "#F7FAFF",
+			"dark": "#07111C"
+		}
+	},
+	"appearance": {
+		"default": "system"
 	},
 	"navigation": {
 		"groups": [
