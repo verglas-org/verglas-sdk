@@ -943,28 +943,3 @@ export function createWorkerUploadForm(
 
 	return formData;
 }
-
-/**
- * Adds the optional client-side compiled Verglas component to an otherwise
- * Cloudflare-compatible upload. The source modules remain untouched so the
- * control plane can return the exact uncompiled upload to the caller.
- */
-export function addVerglasComponentToWorkerUploadForm(
-	formData: FormData,
-	component: Uint8Array
-): void {
-	formData.append(
-		"__verglas_component",
-		new Blob([component], { type: "application/wasm" }),
-		"worker.component.wasm"
-	);
-	const metadata = formData.get("metadata");
-	if (typeof metadata !== "string") {
-		throw new TypeError(
-			"Verglas component uploads require a JSON metadata multipart part"
-		);
-	}
-	const parsed = JSON.parse(metadata) as Record<string, unknown>;
-	parsed.verglas_component_part = "__verglas_component";
-	formData.set("metadata", JSON.stringify(parsed));
-}

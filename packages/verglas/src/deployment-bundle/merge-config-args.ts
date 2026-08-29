@@ -116,7 +116,6 @@ async function mergeSharedConfigArgs(
 		outdir: args.outdir,
 		// Deploy-only; set by mergeDeployConfigArgs.
 		metafile: undefined,
-		compileVerglasComponent: true,
 	};
 
 	return { shared, buildProps };
@@ -240,7 +239,6 @@ export async function mergeBuildOutputProps(config: Config): Promise<{
 		destination: getWranglerTmpDir(entry.projectRoot, "build"),
 		outdir: undefined,
 		metafile: undefined,
-		compileVerglasComponent: true,
 	};
 
 	return { buildProps, assetsOptions };

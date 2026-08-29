@@ -17,10 +17,7 @@ import { resolveAssetOptions, syncAssets } from "./helpers/assets";
 import { renderBindingDependsOnExportError } from "./helpers/binding-depends-on-export";
 import { getBindings } from "./helpers/binding-utils";
 import { printBundleSize } from "./helpers/bundle-reporter";
-import {
-	addVerglasComponentToWorkerUploadForm,
-	createWorkerUploadForm,
-} from "./helpers/create-worker-upload-form";
+import { createWorkerUploadForm } from "./helpers/create-worker-upload-form";
 import {
 	applyServiceAndEnvironmentTags,
 	tagsAreEqual,
@@ -273,12 +270,6 @@ async function uploadWorkerVersion(
 		workerBundle = createWorkerUploadForm(worker, bindings, {
 			unsafe: config.unsafe,
 		});
-		if (buildResult.verglasComponent !== undefined) {
-			addVerglasComponentToWorkerUploadForm(
-				workerBundle,
-				buildResult.verglasComponent
-			);
-		}
 
 		let bindingsPrinted = false;
 
