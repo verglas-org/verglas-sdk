@@ -261,6 +261,11 @@ import {
 	mTlsCertificateNamespace,
 	mTlsCertificateUploadCommand,
 } from "./mtls-certificate/cli";
+import { notebooksNamespace } from "./notebooks";
+import {
+	notebooksDeployCommand,
+	notebooksRunCommand,
+} from "./notebooks/commands";
 import { writeOutput } from "./output";
 import {
 	pagesDeploymentNamespace,
@@ -2648,6 +2653,16 @@ export function createCLIParser(argv: string[]) {
 		},
 	]);
 	registry.registerNamespace("build");
+
+	registry.define([
+		{ command: "wrangler notebooks", definition: notebooksNamespace },
+		{
+			command: "wrangler notebooks deploy",
+			definition: notebooksDeployCommand,
+		},
+		{ command: "wrangler notebooks run", definition: notebooksRunCommand },
+	]);
+	registry.registerNamespace("notebooks");
 
 	registry.define([
 		{

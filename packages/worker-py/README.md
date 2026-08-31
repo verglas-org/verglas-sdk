@@ -65,6 +65,8 @@ The accepted Wrangler JSON/JSONC subset is:
 - `migrations` entries with `tag` and optional `new_sqlite_classes` or `new_classes`;
 - `vars`;
 - `pipelines` entries with exactly `binding` and `stream`.
+- `services` entries with `binding`, `service`, and optional `object` and
+  `origin` routing metadata.
 
 Unknown keys are hard errors, including unknown nested migration keys and
 pipeline entries. Other Cloudflare bindings are not silently ignored; they are
@@ -101,7 +103,11 @@ uses `PipelineBinding` for the concrete runtime object. The binding is separate
 from Durable Object namespaces and has no namespace methods.
 
 `send` requires a Python list of strict JSON values, encodes the compact array as
-UTF-8, and accepts an encoded body of exactly 5 MiB (5 * 1024 * 1024 bytes).
+UTF-8, and accepts an encoded body of exactly 5 MiB (5 _ 1024 _ 1024 bytes).
+Call `await env.STREAM.send(records, event_ids=event_ids)` to attach one stable
+producer event ID to each record. IDs must match the record count and contain
+1–512 characters; Verglas forwards them in `x-verglas-producer-event-id` so a
+retried notebook cell does not append duplicate rows.
 It calls the WIT `bindings.do-fetch` capability with the binding name, stream ID,
 `POST https://verglas.internal/stream/append`, and
 `content-type: application/json`. Only a 2xx response resolves. Host failures

@@ -10,19 +10,15 @@ The supported `wrangler.jsonc` subset is:
 
 ```jsonc
 {
-  "name": "counter",
-  "main": "worker.js",
-  "compatibility_date": "2025-01-01",
-  "compatibility_flags": [],
-  "durable_objects": {
-    "bindings": [
-      { "name": "COUNTER", "class_name": "Counter" }
-    ]
-  },
-  "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["Counter"] }
-  ],
-  "vars": { "GREETING": "hello" }
+	"name": "counter",
+	"main": "worker.js",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": [],
+	"durable_objects": {
+		"bindings": [{ "name": "COUNTER", "class_name": "Counter" }],
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["Counter"] }],
+	"vars": { "GREETING": "hello" },
 }
 ```
 
@@ -51,17 +47,17 @@ A project uses the documented Cloudflare shape:
 import { DurableObject } from "cloudflare:workers";
 
 export class Counter extends DurableObject {
-  async fetch(request) {
-    const row = this.ctx.storage.sql.exec("SELECT count FROM counter").one();
-    return Response.json(row);
-  }
+	async fetch(request) {
+		const row = this.ctx.storage.sql.exec("SELECT count FROM counter").one();
+		return Response.json(row);
+	}
 }
 
 export default {
-  async fetch(request, env, ctx) {
-    const id = env.COUNTER.idFromName("global");
-    return env.COUNTER.get(id).fetch(request);
-  },
+	async fetch(request, env, ctx) {
+		const id = env.COUNTER.idFromName("global");
+		return env.COUNTER.get(id).fetch(request);
+	},
 };
 ```
 
@@ -106,8 +102,9 @@ The manifest accepts the exact Cloudflare-shaped binding form:
 ]
 ```
 
-Unknown keys are hard errors. `env.STREAM` is a dedicated binding with only
-`send(records)`. It requires an array whose values are JSON-serializable,
+Unknown keys are hard errors. `env.STREAM` is a dedicated binding with
+`send(records, { eventIds })`. It requires an array whose values are
+JSON-serializable,
 encodes the array as compact UTF-8 JSON, and rejects encoded requests above
 5 MiB before calling `verglas:do-worker/bindings@0.1.0` `do-fetch`. The call is
 `(binding, stream, { method: "POST", uri: "https://verglas.internal/stream/append",
@@ -115,6 +112,9 @@ headers: [["content-type", "application/json"]], body, ws: undefined })`.
 Only a 2xx response resolves the Promise; host errors and every other status
 reject, with no fallback path. Structured Stream schema validation is not part
 of this SDK surface yet; Pipeline processing must perform that validation.
+When supplied, `eventIds` must contain exactly one 1–512 character stable ID per
+record. Verglas forwards the IDs in `x-verglas-producer-event-id`, allowing a
+retried Worker or notebook cell to append idempotently.
 
 ## Durable Object storage and events
 

@@ -883,8 +883,13 @@ class PipelineBinding:
         self._imports = imports
         self._transactional = transactional
 
-    async def send(self, records: list[Any]) -> None:
-        """Append a JSON record array and wait for a durable 2xx acknowledgement."""
+    async def send(
+        self,
+        records: list[Any],
+        *,
+        event_ids: str | list[str] | None = None,
+    ) -> None:
+        """Append records with optional durable producer identities and await a 2xx ACK."""
         if not isinstance(records, list):
             raise TypeError("Pipeline.send requires a list of JSON-serializable records")
         _assert_json_value(records, set())
@@ -904,7 +909,28 @@ class PipelineBinding:
                 "Pipeline.send request exceeds the 5 MiB encoded request limit "
                 f"({len(encoded)} bytes)"
             )
+        if isinstance(event_ids, str):
+            identities = [event_ids]
+        elif isinstance(event_ids, list) and all(
+            isinstance(value, str) for value in event_ids
+        ):
+            identities = event_ids
+        elif event_ids is None:
+            identities = None
+        else:
+            raise TypeError("Pipeline.send event_ids must be a string or list of strings")
+        if identities is not None:
+            if len(identities) != len(records):
+                raise ValueError("Pipeline.send event_ids must match the record count")
+            if any(not value or len(value) > 512 for value in identities):
+                raise ValueError(
+                    "Pipeline.send event_ids must contain 1-512 character strings"
+                )
         if self._transactional:
+            if identities is not None:
+                raise ValueError(
+                    "Pipeline.send event_ids are unavailable inside a Durable Object transaction"
+                )
             _call_host(
                 self._imports.stream_send,
                 self._binding_name,
@@ -913,11 +939,21 @@ class PipelineBinding:
             )
             return
 
+        headers = [("content-type", "application/json")]
+        if identities is not None:
+            headers.append(
+                (
+                    "x-verglas-producer-event-id",
+                    identities[0]
+                    if len(identities) == 1
+                    else json.dumps(identities, separators=(",", ":")),
+                )
+            )
         if _wit_types is None:
             host_request: Any = SimpleNamespace(
                 method="POST",
                 uri=STREAM_APPEND_URI,
-                headers=[("content-type", "application/json")],
+                headers=headers,
                 body=encoded,
                 ws=None,
             )
@@ -925,7 +961,7 @@ class PipelineBinding:
             host_request = _wit_types.Request(
                 "POST",
                 STREAM_APPEND_URI,
-                [("content-type", "application/json")],
+                headers,
                 encoded,
                 None,
             )
@@ -1135,7 +1171,7 @@ class Environment:
                 raise ValueError(f"duplicate binding name: {binding}")
             self._services[binding] = ServiceBinding(
                 binding,
-                str(record["service"]),
+                str(record.get("object", record["service"])),
                 binding_imports,
             )
         self._sockets = sockets

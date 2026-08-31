@@ -1,0 +1,107 @@
+---
+title: "Run a Python notebook"
+description: "Deploy Jupyter cells as independently triggerable Python Workers over Verglas Streams."
+icon: "book-open"
+---
+
+Verglas treats notebook order as the dependency graph while keeping every code cell independently deployable. Cell `N` receives the JSON-safe state committed by cell `N-1`; it never receives definitions from future cells. Bulk rows travel through Streams rather than being copied between Worker responses.
+
+## Install the Python component builder
+
+The CLI orchestrates the published Python Worker builder, so install it in the environment where you deploy:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install verglas-worker
+```
+
+## Download the Iris notebook
+
+Use the repository's [complete `iris-streaming.ipynb`](https://github.com/verglas-org/verglas-sdk/blob/main/docs/examples/iris-streaming.ipynb), or create an nbformat-4 notebook with these cells:
+
+```python
+rows = [
+    {"x": [5.1, 3.5, 1.4, 0.2], "label": "setosa"},
+    {"x": [7.0, 3.2, 4.7, 1.4], "label": "versicolor"},
+    {"x": [6.3, 3.3, 6.0, 2.5], "label": "virginica"},
+]
+%stream IRIS_RAW rows
+result = {"rows": len(rows), "stream": "iris-raw"}
+```
+
+```python
+labels = sorted(set(row["label"] for row in rows))
+centroids = {}
+for label in labels:
+    samples = [row["x"] for row in rows if row["label"] == label]
+    centroids[label] = [sum(sample[i] for sample in samples) / len(samples) for i in range(4)]
+model = {"algorithm": "nearest-centroid", "centroids": centroids}
+result = model
+%stream IRIS_RESULTS [result]
+```
+
+The notebook metadata declares `IRIS_RAW` and `IRIS_RESULTS` Stream bindings.
+Cells append to Streams with producer identities derived from the cell and run
+IDs. Repeating a run ID is therefore an idempotent trigger retry; choosing a new
+run ID is an explicit rerun. A Pipeline connected to `IRIS_RESULTS` owns any
+downstream Sink writes.
+
+## Deploy
+
+Authenticate, then deploy all code cells into one runtime process group:
+
+```bash
+npx verglas login
+npx verglas notebooks deploy iris-streaming.ipynb --tenant YOUR_TENANT
+```
+
+The generated Worker projects and deployment ledger live under `.verglas/notebooks/iris-streaming/`. The command prints the independently addressable endpoint for every cell.
+
+## Trigger cells
+
+Run the pending notebook suffix in order:
+
+```bash
+npx verglas notebooks run iris-streaming.ipynb
+```
+
+Rerun one cell with a new generation and invalidate its future suffix:
+
+```bash
+npx verglas notebooks run iris-streaming.ipynb --cell fit-centroids
+```
+
+Retry an ambiguous trigger without duplicating Stream records:
+
+```bash
+npx verglas notebooks run iris-streaming.ipynb --cell fit-centroids --run-id fit-2026-08-31
+```
+
+Notebook cells write to Streams. Pipeline owns downstream transformations and
+Sink commits, including the SQL digest, source sequence range, and deterministic
+batch identity.
+
+## Notebook magics and Durable Object sources
+
+The generated Python Worker recognizes two line magics:
+
+```python
+%do BINDING object-name GET /route as response
+%stream STREAM_BINDING records
+```
+
+`%do` supports `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`. Add `using payload`
+before `as response` to send a JSON value as the request body. A service binding
+can carry `object` and `origin` routing metadata, while a Durable Object namespace
+resolves the object name with `id_from_name`.
+
+The repository's [DO streaming notebook](https://github.com/verglas-org/verglas-sdk/blob/main/docs/examples/do-streaming.ipynb)
+reads `/samples` from the existing `sensor-source` object `station-42`, then sends
+the returned records to the `sensor-raw` Stream. Deploy and trigger it with the
+same commands:
+
+```bash
+npx verglas notebooks deploy do-streaming.ipynb --tenant YOUR_TENANT
+npx verglas notebooks run do-streaming.ipynb
+```

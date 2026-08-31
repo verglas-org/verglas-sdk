@@ -244,13 +244,15 @@ def _parse_services(value: Any) -> list[dict[str, str]]:
         path = f"manifest.services[{index}]"
         if not isinstance(raw_service, dict):
             raise ManifestError(f"{path} must be an object")
-        _reject_unknown_keys(raw_service, {"binding", "service"}, path)
-        services.append(
-            {
-                "binding": _required_string(raw_service, "binding", path),
-                "service": _required_string(raw_service, "service", path),
-            }
-        )
+        _reject_unknown_keys(raw_service, {"binding", "service", "object", "origin"}, path)
+        service = {
+            "binding": _required_string(raw_service, "binding", path),
+            "service": _required_string(raw_service, "service", path),
+        }
+        for key in ("object", "origin"):
+            if key in raw_service:
+                service[key] = _required_string(raw_service, key, path)
+        services.append(service)
     return services
 
 
