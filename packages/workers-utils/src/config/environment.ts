@@ -46,6 +46,15 @@ export type Route =
 	| ZoneNameRoute
 	| CustomDomainRoute;
 
+/** Verglas schedule controls for bounded historical catch-up. */
+export type CronTrigger =
+	| string
+	| {
+			cron: string;
+			start_date?: string;
+			max_concurrent?: number;
+	  };
+
 /**
  * Configuration in wrangler for Cloudchamber
  */
@@ -631,7 +640,7 @@ interface EnvironmentInheritable {
 	 * @inheritable
 	 */
 	triggers: {
-		crons?: string[];
+		crons?: CronTrigger[];
 		events?: ArtifactsEventTrigger[];
 	};
 

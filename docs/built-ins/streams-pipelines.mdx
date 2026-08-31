@@ -107,3 +107,11 @@ Streams may enforce an immutable schema with `string`, integer and float
 types, `bool`, `timestamp`, `json`, `binary`, `list`, and nested `struct`.
 Invalid positions stay visible in validation metrics but are skipped during
 Pipeline processing without renumbering later sequence positions.
+
+## Backfill a Stream from a scheduled Worker
+
+A Worker can use a past `start_date`, bounded concurrency, and its logical
+`scheduledTime` to ingest historical partitions into a Stream while current
+cron deadlines continue to run. See
+[Scheduled Workers and backfills](/docs/concepts/scheduled-workers) for a daily
+market-data example.

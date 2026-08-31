@@ -43,7 +43,10 @@
 			{
 				"group": "Concepts",
 				"icon": "blocks",
-				"pages": ["docs/concepts/platform"]
+				"pages": [
+					"docs/concepts/platform",
+					"docs/concepts/scheduled-workers"
+				]
 			},
 			{
 				"group": "Built-ins",

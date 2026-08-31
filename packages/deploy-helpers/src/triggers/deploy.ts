@@ -229,17 +229,20 @@ export async function triggersDeploy(
 	// If schedules is not defined then we just leave whatever is previously deployed alone.
 	// If it is an empty array we will remove all schedules.
 	if (crons) {
+		const schedules = crons.map((trigger) =>
+			typeof trigger === "string" ? { cron: trigger } : trigger
+		);
 		deployments.push(
 			fetchResult(config, `${workerUrl}/schedules`, {
 				// Note: PUT will override previous schedules on this script.
 				method: "PUT",
-				body: JSON.stringify(crons.map((cron) => ({ cron }))),
+				body: JSON.stringify(schedules),
 				headers: {
 					"Content-Type": "application/json",
 				},
 			}).then(
 				() => ({
-					targets: crons.map((trigger) => `schedule: ${trigger}`),
+					targets: schedules.map((trigger) => `schedule: ${trigger.cron}`),
 				}),
 				(error) => ({ category: "Cron schedules", targets: [], error })
 			)

@@ -54,9 +54,28 @@ test('accepts Cloudflare cron triggers and preserves them in the build manifest'
   });
 });
 
+test('accepts Verglas historical catch-up controls', () => {
+  assert.deepEqual(parseWranglerManifest({
+    name: 'market-ingest',
+    main: 'worker.js',
+    triggers: { crons: [{
+      cron: '0 0 * * *',
+      start_date: '2024-01-01T00:00:00Z',
+      max_concurrent: 4,
+    }] },
+  }).triggers, {
+    crons: [{
+      cron: '0 0 * * *',
+      start_date: '2024-01-01T00:00:00Z',
+      max_concurrent: 4,
+    }],
+  });
+});
+
 test('rejects malformed cron trigger manifests', () => {
   assert.throws(() => parseWranglerManifest(base({ triggers: { crons: [''] } })), /triggers\.crons/u);
   assert.throws(() => parseWranglerManifest(base({ triggers: { crons: ['* * * * *'], extra: true } })), /unknown triggers key: extra/u);
+  assert.throws(() => parseWranglerManifest(base({ triggers: { crons: [{ cron: '* * * * *', max_concurrent: 0 }] } })), /max_concurrent/u);
 });
 
 test('rejects an unknown top-level manifest key by name', () => {

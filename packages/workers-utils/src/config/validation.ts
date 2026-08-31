@@ -2314,6 +2314,65 @@ const validateTriggers: ValidatorFn = (
 			`Expected "${triggersFieldName}.crons" to be of type array, but got ${JSON.stringify(triggersValue)}.`
 		);
 		isValid = false;
+	} else if ("crons" in triggersValue && Array.isArray(triggersValue.crons)) {
+		for (const [cronIndex, cron] of triggersValue.crons.entries()) {
+			const cronFieldName = `${triggersFieldName}.crons[${cronIndex}]`;
+			if (typeof cron === "string") {
+				if (cron.trim() === "") {
+					diagnostics.errors.push(`"${cronFieldName}" must not be empty.`);
+					isValid = false;
+				}
+				continue;
+			}
+			if (typeof cron !== "object" || cron === null || Array.isArray(cron)) {
+				diagnostics.errors.push(
+					`Expected "${cronFieldName}" to be a string or Verglas schedule object, but got ${JSON.stringify(cron)}.`
+				);
+				isValid = false;
+				continue;
+			}
+			const schedule = cron as Record<string, unknown>;
+			const unknownKey = Object.keys(schedule).find(
+				(key) => !["cron", "start_date", "max_concurrent"].includes(key)
+			);
+			if (unknownKey !== undefined) {
+				diagnostics.errors.push(
+					`Unknown key "${unknownKey}" in "${cronFieldName}".`
+				);
+				isValid = false;
+			}
+			if (typeof schedule.cron !== "string" || schedule.cron.trim() === "") {
+				diagnostics.errors.push(
+					`"${cronFieldName}.cron" must be a non-empty string.`
+				);
+				isValid = false;
+			}
+			if (
+				schedule.start_date !== undefined &&
+				(typeof schedule.start_date !== "string" ||
+					!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?Z$/u.test(
+						schedule.start_date
+					) ||
+					!Number.isFinite(Date.parse(schedule.start_date)))
+			) {
+				diagnostics.errors.push(
+					`"${cronFieldName}.start_date" must be a UTC RFC 3339 timestamp.`
+				);
+				isValid = false;
+			}
+			if (
+				schedule.max_concurrent !== undefined &&
+				(typeof schedule.max_concurrent !== "number" ||
+					!Number.isInteger(schedule.max_concurrent) ||
+					schedule.max_concurrent < 1 ||
+					schedule.max_concurrent > 32)
+			) {
+				diagnostics.errors.push(
+					`"${cronFieldName}.max_concurrent" must be an integer from 1 to 32.`
+				);
+				isValid = false;
+			}
+		}
 	}
 
 	if (

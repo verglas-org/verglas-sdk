@@ -75,6 +75,27 @@ known v0 divergence from Cloudflare's ability to continue work after sending a
 response. `passThroughOnException` is accepted by the context but has no
 pass-through host route.
 
+### Scheduled Workers and historical catch-up
+
+The manifest accepts ordinary cron strings and Verglas schedule objects:
+
+```jsonc
+"triggers": {
+  "crons": [{
+    "cron": "0 0 * * *",
+    "start_date": "2024-01-01T00:00:00Z",
+    "max_concurrent": 4
+  }]
+}
+```
+
+`start_date` is an inclusive UTC lower bound for historical cron instances;
+`max_concurrent` must be between 1 and 32. The live and catch-up cursors advance
+independently, with live work receiving the first concurrency slot. A
+`scheduled(controller, env, ctx)` handler must use `controller.scheduledTime`
+as its logical job time: it is historical during catch-up and current during a
+normal cron run.
+
 ### Pipeline Stream bindings
 
 The manifest accepts the exact Cloudflare-shaped binding form:

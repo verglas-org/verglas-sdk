@@ -5,6 +5,7 @@ import type {
 	CfModuleType,
 	CfWorkerSourceMap,
 	Config,
+	CronTrigger,
 	FetchKVGetValueFetcher,
 	FetchResultFetcher,
 	FetchListResultFetcher,
@@ -116,7 +117,7 @@ export type DeployProps = SharedDeployVersionsProps & {
 	/** Merged from --site arg and config.site. */
 	legacyAssetPaths: LegacyAssetPaths | undefined;
 	/** Merged: --triggers arg ?? config.triggers.crons. */
-	triggers: string[] | undefined;
+	triggers: CronTrigger[] | undefined;
 	/** Merged: --routes arg ?? config.routes ?? config.route. AND --domains and custom_domains*/
 	routes: Route[];
 	/** Merged: --logpush arg ?? config.logpush. */
@@ -169,7 +170,7 @@ export type TriggerProps = {
 	accountId: string | undefined;
 	scriptName: string;
 	workerTag?: string | null;
-	crons: string[] | undefined;
+	crons: CronTrigger[] | undefined;
 	routes: Route[];
 	firstDeploy: boolean;
 	dryRun: boolean;

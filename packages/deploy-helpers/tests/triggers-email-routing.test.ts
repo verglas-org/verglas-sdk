@@ -16,11 +16,15 @@ describe("triggersDeploy Email Routing integration", () => {
 	let metadataRequests: number;
 	let planRequests: number;
 	let planError: Error | undefined;
+	let scheduleBodies: string[];
+	let scheduleError: Error | undefined;
 
 	beforeEach(() => {
 		metadataRequests = 0;
 		planRequests = 0;
 		planError = undefined;
+		scheduleBodies = [];
+		scheduleError = new Error("trigger deployment failed");
 
 		initDeployHelpersContext({
 			logger: {
@@ -43,7 +47,9 @@ describe("triggersDeploy Email Routing integration", () => {
 					return { default_environment: { script: { tag: WORKER_TAG } } };
 				}
 				if (path.endsWith("/schedules")) {
-					throw new Error("trigger deployment failed");
+					scheduleBodies.push(String(init?.body));
+					if (scheduleError !== undefined) throw scheduleError;
+					return {};
 				}
 				if (
 					init?.method === "POST" &&
@@ -149,6 +155,38 @@ describe("triggersDeploy Email Routing integration", () => {
 		).rejects.toThrow("trigger deployment failed");
 
 		expect(planRequests).toBe(1);
+	});
+
+	it("preserves Verglas historical catch-up controls", async ({ expect }) => {
+		scheduleError = undefined;
+
+		await triggersDeploy({
+			config: config(),
+			accountId: ACCOUNT_ID,
+			scriptName: WORKER_NAME,
+			workerTag: WORKER_TAG,
+			crons: [
+				{
+					cron: "0 0 * * *",
+					start_date: "2024-01-01T00:00:00Z",
+					max_concurrent: 4,
+				},
+			],
+			routes: [],
+			firstDeploy: false,
+			dryRun: false,
+			validated: false,
+		});
+
+		expect(scheduleBodies).toEqual([
+			JSON.stringify([
+				{
+					cron: "0 0 * * *",
+					start_date: "2024-01-01T00:00:00Z",
+					max_concurrent: 4,
+				},
+			]),
+		]);
 	});
 });
 
