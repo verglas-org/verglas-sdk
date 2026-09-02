@@ -64,6 +64,10 @@ The `verglas` CLI offers various commands, the most popular being:
 
 - `verglas deploy` to deploy a Worker to the Verglas network.
 
+- `verglas notebooks deploy <file.ipynb> --tenant <tenant>` to deploy every code cell as an independent Python Worker in one shared runtime group.
+
+- `verglas notebooks run <file.ipynb> [--cell <id>]` to trigger the pending notebook suffix or rerun one cell.
+
 There are many more commands and options available; the command surface follows
 the [Cloudflare Workers API](https://developers.cloudflare.com/workers/wrangler/commands/).
 

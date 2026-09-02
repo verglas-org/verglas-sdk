@@ -144,18 +144,28 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(manifest.pipelines, [{"binding": "STREAM", "stream": "stream-id"}])
 
     def test_load_manifest_accepts_exact_service_entries(self) -> None:
-        """Service bindings preserve the direct binding and configured target."""
+        """Service bindings preserve direct and prebuilt product targets."""
         data = parse_jsonc(
             (self.project / "wrangler.jsonc").read_text(encoding="utf-8")
         )
-        data["services"] = [{"binding": "CATALOG", "service": "catalog-service"}]
+        data["services"] = [{
+            "binding": "CATALOG",
+            "service": "catalog",
+            "object": "warehouse",
+            "origin": "https://catalog.example",
+        }]
         (self.project / "wrangler.jsonc").write_text(json.dumps(data), encoding="utf-8")
 
         manifest = load_manifest(self.project)
 
         self.assertEqual(
             manifest.services,
-            [{"binding": "CATALOG", "service": "catalog-service"}],
+            [{
+                "binding": "CATALOG",
+                "service": "catalog",
+                "object": "warehouse",
+                "origin": "https://catalog.example",
+            }],
         )
 
     def test_load_manifest_rejects_unknown_service_key(self) -> None:

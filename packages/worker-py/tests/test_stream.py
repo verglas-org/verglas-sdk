@@ -78,6 +78,24 @@ class StreamBindingTests(unittest.TestCase):
         asyncio.run(stream.send([{"event": "staged"}]))
         self.assertEqual(calls, [("STREAM", "stream-id", '[{"event":"staged"}]')])
 
+    def test_send_forwards_durable_producer_event_identities(self) -> None:
+        """A retry key per record reaches Stream's idempotency header unchanged."""
+        host = StreamHost()
+        stream = PipelineBinding("STREAM", "stream-id", host)
+
+        asyncio.run(stream.send([{"value": 1}, {"value": 2}], event_ids=["run:0", "run:1"]))
+
+        request = host.calls[0][2]
+        self.assertEqual(
+            request.headers,
+            [
+                ("content-type", "application/json"),
+                ("x-verglas-producer-event-id", '["run:0","run:1"]'),
+            ],
+        )
+        with self.assertRaisesRegex(ValueError, "record count"):
+            asyncio.run(stream.send([{"value": 1}], event_ids=["one", "two"]))
+
     def test_durable_object_environment_uses_transactional_stream_transport(self) -> None:
         """A Durable Object environment routes its manifest Stream through storage."""
         calls: list[tuple[str, str, str]] = []

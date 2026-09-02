@@ -1,0 +1,116 @@
+---
+title: "Scheduled Workers and backfills"
+description: "Run current cron jobs while bounded historical catch-up fills earlier partitions."
+icon: "calendar-sync"
+---
+
+Verglas schedules can start in the past. The scheduler gives every invocation
+its logical job time, runs historical instances with bounded concurrency, and
+keeps the current cron schedule moving while catch-up is still in progress.
+
+## Configure a historical start date
+
+This daily Worker starts with January 1, 2024, permits four live and historical
+instances at a time, and sends its results into the `market_prices` Stream:
+
+```jsonc
+{
+	"$schema": "node_modules/verglas/config-schema.json",
+	"name": "yahoo-daily-prices",
+	"main": "./src/index.js",
+	"compatibility_date": "2026-08-31",
+	"triggers": {
+		"crons": [
+			{
+				"cron": "0 0 * * *",
+				"start_date": "2024-01-01T00:00:00Z",
+				"max_concurrent": 4,
+			},
+		],
+	},
+	"pipelines": [{ "binding": "YAHOO_DAILY", "stream": "market_prices" }],
+}
+```
+
+`start_date` is an inclusive UTC RFC 3339 timestamp. It enables catch-up for
+cron occurrences before deployment. `max_concurrent` is an integer from 1 to
+32 and limits the number of instances dispatched together. A plain cron string
+such as `"0 0 * * *"` retains normal forward-only scheduling.
+
+## Use logical job time
+
+Always partition scheduled work with `controller.scheduledTime`, not the wall
+clock. During catch-up it is the historical deadline being processed; for a
+current run it is the ordinary cron deadline.
+
+```js
+const DAY_SECONDS = 24 * 60 * 60;
+
+export default {
+	async scheduled(controller, env) {
+		const symbol = "SPY";
+		const jobTime = new Date(controller.scheduledTime);
+		const period1 = Math.floor(controller.scheduledTime / 1000);
+		const period2 = period1 + DAY_SECONDS;
+		const url = new URL(
+			`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`
+		);
+		url.search = new URLSearchParams({
+			period1: String(period1),
+			period2: String(period2),
+			interval: "1d",
+			events: "history",
+		});
+
+		const response = await fetch(url, {
+			headers: { "user-agent": "verglas-market-ingest/1.0" },
+		});
+		if (!response.ok) {
+			throw new Error(`Yahoo Finance returned HTTP ${response.status}`);
+		}
+
+		const payload = await response.json();
+		const chart = payload.chart?.result?.[0];
+		const quote = chart?.indicators?.quote?.[0];
+		if (!chart?.timestamp?.length || !quote) return; // Weekend or market holiday.
+
+		await env.YAHOO_DAILY.send([
+			{
+				id: `${symbol}:${jobTime.toISOString()}`,
+				symbol,
+				job_time: jobTime.toISOString(),
+				market_time: new Date(chart.timestamp[0] * 1000).toISOString(),
+				open: quote.open?.[0],
+				high: quote.high?.[0],
+				low: quote.low?.[0],
+				close: quote.close?.[0],
+				volume: quote.volume?.[0],
+			},
+		]);
+	},
+};
+```
+
+The Pipeline binding receives the historical `job_time` just like any other
+record field. Use a deterministic identity such as `(symbol, job_time)` in the
+downstream model: a Worker can be retried after it durably appends a record but
+before it acknowledges completion.
+
+## How live and catch-up runs interact
+
+Each schedule has two durable cursors:
+
+- The live cursor starts at the first cron deadline after deployment and always
+  gets the first available concurrency slot.
+- The catch-up cursor advances from `start_date` toward the live cursor's
+  initial boundary in bounded batches.
+
+The cursors share an idempotent execution ledger but advance independently. A
+failed historical date is retried without moving the live cursor backward, so
+today's run does not wait for an older backlog to finish.
+
+<Warning>
+	`max_concurrent` controls pressure, not ordering. Historical invocations in
+	one batch may finish in any order. Do not make one partition depend on side
+	effects from the previous partition.
+</Warning>

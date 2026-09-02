@@ -38,12 +38,16 @@
 			{
 				"group": "Get started",
 				"icon": "rocket",
-				"pages": ["docs/index", "docs/get-started/quickstart"]
+				"pages": [
+					"docs/index",
+					"docs/get-started/quickstart",
+					"docs/get-started/notebooks"
+				]
 			},
 			{
 				"group": "Concepts",
 				"icon": "blocks",
-				"pages": ["docs/concepts/platform"]
+				"pages": ["docs/concepts/platform", "docs/concepts/scheduled-workers"]
 			},
 			{
 				"group": "Built-ins",

@@ -30,6 +30,7 @@ const vectorizeKeys = new Set(['binding', 'index_name']);
 const graphKeys = new Set(['binding', 'graph_name']);
 const queryKeys = new Set(['binding', 'query_name']);
 const triggerKeys = new Set(['crons']);
+const cronTriggerKeys = new Set(['cron', 'start_date', 'max_concurrent']);
 
 /**
  * Error raised when a project manifest is outside the supported subset.
@@ -219,7 +220,43 @@ function parseTriggers(value) {
   }
   const triggers = /** @type {Record<string, unknown>} */ (value);
   rejectUnknownKeys(triggers, triggerKeys, 'triggers');
-  return { crons: stringArray(triggers.crons, 'manifest.triggers.crons') };
+  if (!Array.isArray(triggers.crons)) {
+    throw new ManifestError('manifest.triggers.crons must be an array');
+  }
+  const crons = triggers.crons.map((rawTrigger, index) => {
+    if (typeof rawTrigger === 'string') {
+      if (rawTrigger.trim() === '') throw new ManifestError('manifest.triggers.crons entries must not be empty');
+      return rawTrigger;
+    }
+    const path = `manifest.triggers.crons[${index}]`;
+    if (!rawTrigger || typeof rawTrigger !== 'object' || Array.isArray(rawTrigger)) {
+      throw new ManifestError(`${path} must be a string or Verglas schedule object`);
+    }
+    const trigger = /** @type {Record<string, unknown>} */ (rawTrigger);
+    rejectUnknownKeys(trigger, cronTriggerKeys, path);
+    const cron = requiredString(trigger, 'cron', path);
+    if (trigger.start_date !== undefined && (
+      typeof trigger.start_date !== 'string'
+      || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?Z$/u.test(trigger.start_date)
+      || !Number.isFinite(Date.parse(trigger.start_date))
+    )) {
+      throw new ManifestError(`${path}.start_date must be a UTC RFC 3339 timestamp`);
+    }
+    if (trigger.max_concurrent !== undefined && (
+      typeof trigger.max_concurrent !== 'number'
+      || !Number.isInteger(trigger.max_concurrent)
+      || trigger.max_concurrent < 1
+      || trigger.max_concurrent > 32
+    )) {
+      throw new ManifestError(`${path}.max_concurrent must be an integer from 1 to 32`);
+    }
+    return {
+      cron,
+      ...(trigger.start_date === undefined ? {} : { start_date: trigger.start_date }),
+      ...(trigger.max_concurrent === undefined ? {} : { max_concurrent: trigger.max_concurrent }),
+    };
+  });
+  return { crons };
 }
 
 /**

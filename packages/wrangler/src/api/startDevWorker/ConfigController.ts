@@ -325,7 +325,7 @@ async function resolveTriggers(
 
 	const crons =
 		config.triggers.crons?.map<Extract<Trigger, { type: "cron" }>>((c) => ({
-			cron: c,
+			cron: typeof c === "string" ? c : c.cron,
 			type: "cron",
 		})) ?? [];
 

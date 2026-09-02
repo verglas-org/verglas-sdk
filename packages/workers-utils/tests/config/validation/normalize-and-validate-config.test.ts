@@ -837,6 +837,31 @@ describe("normalizeAndValidateConfig()", () => {
 				`);
 		});
 
+		it("should accept Verglas historical catch-up cron controls", ({
+			expect,
+		}) => {
+			const triggers = {
+				crons: [
+					{
+						cron: "0 0 * * *",
+						start_date: "2024-01-01T00:00:00Z",
+						max_concurrent: 4,
+					},
+				],
+			};
+
+			const { config, diagnostics } = normalizeAndValidateConfig(
+				{ triggers },
+				"project/wrangler.jsonc",
+				"project/wrangler.jsonc",
+				{ env: undefined }
+			);
+
+			expect(config.triggers).toEqual(triggers);
+			expect(diagnostics.hasErrors()).toBe(false);
+			expect(diagnostics.hasWarnings()).toBe(false);
+		});
+
 		it("should accept Artifacts event triggers", ({ expect }) => {
 			const expectedConfig: RawConfig = {
 				triggers: {
@@ -1450,6 +1475,8 @@ describe("normalizeAndValidateConfig()", () => {
 				  - Expected "tsconfig" to be of type string but got true.
 				  - Expected "name" to be of type string, alphanumeric and lowercase with dashes only but got 111.
 				  - Expected "main" to be of type string but got 1333.
+				  - Expected "triggers.crons[0]" to be a string or Verglas schedule object, but got 1111.
+				  - Expected "triggers.crons[1]" to be a string or Verglas schedule object, but got 1222.
 				  - Expected "placement.mode" field to be one of ["off","smart","targeted"] but got "INVALID".
 				  - The field "define.DEF1" should be a string but got 1777.
 				  - Expected "no_bundle" to be of type boolean but got "INVALID".
@@ -10020,6 +10047,8 @@ describe("normalizeAndValidateConfig()", () => {
 				    - Expected "tsconfig" to be of type string but got 123.
 				    - Expected "name" to be of type string, alphanumeric and lowercase with dashes only but got 111.
 				    - Expected "main" to be of type string but got 1333.
+				    - Expected "triggers.crons[0]" to be a string or Verglas schedule object, but got 1111.
+				    - Expected "triggers.crons[1]" to be a string or Verglas schedule object, but got 1222.
 				    - Expected "no_bundle" to be of type boolean but got "INVALID".
 				    - Expected "minify" to be of type boolean but got "INVALID".
 				    - Expected "first_party_worker" to be of type boolean but got "INVALID".
